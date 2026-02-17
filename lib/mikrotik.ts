@@ -1,0 +1,195 @@
+import { RouterConfig, RouterOSClient } from 'routeros-client';
+
+export interface MikroTikConfig {
+    host: string;
+    user: string;
+    pass: string;
+    port?: number;
+}
+
+export class MikroTikService {
+    private config: MikroTikConfig;
+
+    constructor(config: MikroTikConfig) {
+        this.config = config;
+    }
+
+    private async getClient() {
+        const client = new RouterOSClient({
+            host: this.config.host,
+            user: this.config.user,
+            password: this.config.pass,
+            port: this.config.port || 8728,
+            timeout: 5000
+        });
+        return client;
+    }
+
+    /**
+     * Add or update a PPPoE secret
+     */
+    async upsertUser(username: string, password: string, profile: string, comment: string) {
+        console.log(`[MikroTik ${this.config.host}] Upserting user: ${username}`);
+        const client = await this.getClient();
+        try {
+            const api = await client.connect();
+
+            // Check if user exists
+            const existing = await api.write('/ppp/secret/print', [`?name=${username}`]);
+
+            if (existing.length > 0) {
+                // Update
+                await api.write('/ppp/secret/set', [
+                    `=.id=${existing[0].id}`,
+                    `=password=${password}`,
+                    `=profile=${profile}`,
+                    `=comment=${comment}`
+                ]);
+            } else {
+                // Add
+                await api.write('/ppp/secret/add', [
+                    `=name=${username}`,
+                    `=password=${password}`,
+                    `=profile=${profile}`,
+                    `=comment=${comment}`
+                ]);
+            }
+
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            console.error('MikroTik Upsert Error:', error);
+            client.close();
+            throw error;
+        }
+    }
+
+    /**
+     * Suspend a user by changing their profile and kicking active session
+     */
+    async suspendUser(username: string, suspendedProfile: string = 'suspended') {
+        console.log(`[MikroTik ${this.config.host}] Suspending user: ${username}`);
+        const client = await this.getClient();
+        try {
+            const api = await client.connect();
+
+            // 1. Change secret profile
+            await api.write('/ppp/secret/set', [
+                `=numbers=${username}`,
+                `=profile=${suspendedProfile}`
+            ]);
+
+            // 2. Remove active session to force reconnect
+            const active = await api.write('/ppp/active/print', [`?name=${username}`]);
+            for (const sess of active) {
+                await api.write('/ppp/active/remove', [`=.id=${sess.id}`]);
+            }
+
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            client.close();
+            throw error;
+        }
+    }
+
+    /**
+   * Reactivate a user by restoring their profile and kicking active session
+   */
+    async activateUser(username: string, profile: string) {
+        console.log(`[MikroTik ${this.config.host}] Activating user: ${username} with profile: ${profile}`);
+        const client = await this.getClient();
+        try {
+            const api = await client.connect();
+
+            // 1. Restore profile
+            await api.write('/ppp/secret/set', [
+                `=numbers=${username}`,
+                `=profile=${profile}`
+            ]);
+
+            // 2. Remove active session to force reconnect
+            const active = await api.write('/ppp/active/print', [`?name=${username}`]);
+            for (const sess of active) {
+                await api.write('/ppp/active/remove', [`=.id=${sess.id}`]);
+            }
+
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            client.close();
+            throw error;
+        }
+    }
+
+    /**
+     * Get active connections with real-time stats
+     */
+    async getActiveConnections() {
+        const client = await this.getClient();
+        try {
+            const api = await client.connect();
+            const active = await api.write('/ppp/active/print');
+            await client.close();
+            return active;
+        } catch (error) {
+            client.close();
+            return [];
+        }
+    }
+
+    /**
+     * Get system health and resource usage
+     */
+    async getHealth() {
+        const client = await this.getClient();
+        try {
+            const api = await client.connect();
+
+            // Fetch resources (CPU, Memory, Uptime, Version)
+            const resources = await api.write('/system/resource/print');
+
+            // Fetch active sessions count
+            const pppActive = await api.write('/ppp/active/print');
+            const hsActive = await api.write('/ip/hotspot/active/print');
+
+            await client.close();
+
+            const res = resources[0];
+            return {
+                status: 'online',
+                cpu: parseInt(res['cpu-load'] || '0'),
+                memory: {
+                    free: Math.round(parseInt(res['free-memory'] || '0') / 1024 / 1024),
+                    total: Math.round(parseInt(res['total-memory'] || '0') / 1024 / 1024)
+                },
+                total_sessions: (pppActive?.length || 0) + (hsActive?.length || 0),
+                uptime: res.uptime,
+                version: res.version,
+                board_name: res['board-name']
+            };
+        } catch (error) {
+            client.close();
+            return { status: 'offline', cpu: 0, memory: { free: 0, total: 0 }, total_sessions: 0 };
+        }
+    }
+}
+
+import pool from './db';
+
+export async function getRouterService(routerId: number): Promise<MikroTikService | null> {
+    const res = await pool.query(
+        'SELECT * FROM routers WHERE id = $1',
+        [routerId]
+    );
+
+    if (res.rows.length === 0) return null;
+    const router = res.rows[0];
+
+    return new MikroTikService({
+        host: router.ip_address,
+        user: router.username,
+        pass: router.password,
+        port: router.api_port
+    });
+}

@@ -8,6 +8,7 @@ export async function GET(request: Request) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const search = searchParams.get('search') || '';
+        const status = searchParams.get('status') || '';
         const sortField = searchParams.get('sortField') || 'created_at';
         const sortOrder = searchParams.get('sortOrder') || 'DESC';
         const offset = (page - 1) * limit;
@@ -17,12 +18,20 @@ export async function GET(request: Request) {
         const actualSortField = validFields.includes(sortField) ? sortField : 'created_at';
         const actualSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-        let whereClause = '';
+        let whereConditions = [];
         let params: any[] = [];
+
         if (search) {
-            whereClause = `WHERE s.full_name ILIKE $1 OR s.phone ILIKE $1 OR s.email ILIKE $1`;
+            whereConditions.push(`(s.full_name ILIKE $${params.length + 1} OR s.phone ILIKE $${params.length + 1} OR s.email ILIKE $${params.length + 1})`);
             params.push(`%${search}%`);
         }
+
+        if (status && status !== 'all') {
+            whereConditions.push(`s.status = $${params.length + 1}`);
+            params.push(status);
+        }
+
+        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
         const query = `
             SELECT s.*, p.name as plan_name, r.name as router_name 

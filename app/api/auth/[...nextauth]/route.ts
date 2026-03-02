@@ -1,8 +1,8 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import pool from "@/lib/db";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
             name: "AirLink ISP",
@@ -24,7 +24,6 @@ const handler = NextAuth({
 
                     if (adminRes.rows.length > 0) {
                         const admin = adminRes.rows[0];
-                        // In a real app, use bcrypt.compare(credentials.password, admin.password)
                         if (credentials.password === admin.password) {
                             return {
                                 id: admin.id.toString(),
@@ -35,7 +34,25 @@ const handler = NextAuth({
                         }
                     }
 
-                    // 2. Development Fallback (only if DB is empty or during setup)
+                    // 2. Check Subscribers Table
+                    const subRes = await pool.query(
+                        "SELECT id, email, password, full_name FROM subscribers WHERE email = $1 OR phone = $1",
+                        [credentials.username]
+                    );
+
+                    if (subRes.rows.length > 0) {
+                        const subscriber = subRes.rows[0];
+                        if (credentials.password === subscriber.password) {
+                            return {
+                                id: subscriber.id.toString(),
+                                name: subscriber.full_name,
+                                email: subscriber.email,
+                                role: "subscriber"
+                            };
+                        }
+                    }
+
+                    // 3. Development Fallback
                     if (credentials.username === "admin@airlink.com" && credentials.password === "Admin@1234") {
                         return { id: "0", name: "Super Admin", email: "admin@airlink.com", role: "admin" };
                     }
@@ -43,7 +60,6 @@ const handler = NextAuth({
                     return null;
                 } catch (error) {
                     console.error("Auth error:", error);
-                    // Critical fallback if DB is down during initial setup
                     if (credentials.username === "admin@airlink.com" && credentials.password === "Admin@1234") {
                         return { id: "0", name: "Super Admin", email: "admin@airlink.com", role: "admin" };
                     }
@@ -75,6 +91,7 @@ const handler = NextAuth({
         strategy: "jwt",
     },
     secret: process.env.NEXTAUTH_SECRET,
-});
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

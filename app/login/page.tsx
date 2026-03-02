@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Wifi, ArrowRight, ShieldCheck, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
@@ -27,7 +28,17 @@ export default function LoginPage() {
             if (result?.error) {
                 setError('Invalid email or password');
             } else {
-                router.push('/admin/dashboard');
+                // Fetch the session to determine the user role
+                const session = await getSession() as any;
+
+                if (session?.user?.role === 'admin') {
+                    router.push('/admin/dashboard');
+                } else if (session?.user?.role === 'subscriber') {
+                    router.push('/subscriber-portal/dashboard');
+                } else {
+                    router.push('/');
+                }
+
                 router.refresh();
             }
         } catch (err) {
@@ -104,7 +115,7 @@ export default function LoginPage() {
                         <div>
                             <div className="flex justify-between items-center mb-2 px-1">
                                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest text-[10px]">Password</label>
-                                <button type="button" className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Forgot Password?</button>
+                                <Link href="/forgot-password" className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Forgot Password?</Link>
                             </div>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -151,7 +162,7 @@ export default function LoginPage() {
                     </form>
 
                     <p className="mt-12 text-center text-sm text-slate-500">
-                        Don't have an account? <button className="font-bold text-indigo-600 hover:text-indigo-700">Contact Support</button>
+                        Don't have an account? <Link href="/register" className="font-bold text-indigo-600 hover:text-indigo-700">Register Now</Link>
                     </p>
                 </div>
             </div>

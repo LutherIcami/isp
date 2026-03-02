@@ -1,4 +1,4 @@
-import { RouterConfig, RouterOSClient } from 'routeros-client';
+import { RouterOSClient } from 'routeros-client';
 
 export interface MikroTikConfig {
     host: string;
@@ -32,7 +32,7 @@ export class MikroTikService {
         console.log(`[MikroTik ${this.config.host}] Upserting user: ${username}`);
         const client = await this.getClient();
         try {
-            const api = await client.connect();
+            const api = await client.connect() as any;
 
             // Check if user exists
             const existing = await api.write('/ppp/secret/print', [`?name=${username}`]);
@@ -40,7 +40,7 @@ export class MikroTikService {
             if (existing.length > 0) {
                 // Update
                 await api.write('/ppp/secret/set', [
-                    `=.id=${existing[0].id}`,
+                    `=.id=${existing[0]['.id'] || existing[0].id}`,
                     `=password=${password}`,
                     `=profile=${profile}`,
                     `=comment=${comment}`
@@ -65,24 +65,87 @@ export class MikroTikService {
     }
 
     /**
+     * Disable a user (Secret)
+     */
+    async disableUser(username: string) {
+        console.log(`[MikroTik ${this.config.host}] Disabling user: ${username}`);
+        const client = await this.getClient();
+        try {
+            const api = await client.connect() as any;
+
+            // 1. Find the secret ID
+            const secrets = await api.write('/ppp/secret/print', [`?name=${username}`]);
+            if (secrets.length > 0) {
+                // 2. Disable it
+                await api.write('/ppp/secret/set', [
+                    `=.id=${secrets[0]['.id'] || secrets[0].id}`,
+                    `=disabled=yes`
+                ]);
+            }
+
+            // 3. Kick active session
+            const active = await api.write('/ppp/active/print', [`?name=${username}`]);
+            for (const sess of active) {
+                await api.write('/ppp/active/remove', [`=.id=${sess['.id'] || sess.id}`]);
+            }
+
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            client.close();
+            throw error;
+        }
+    }
+
+    /**
+     * Enable a user (Secret)
+     */
+    async enableUser(username: string) {
+        console.log(`[MikroTik ${this.config.host}] Enabling user: ${username}`);
+        const client = await this.getClient();
+        try {
+            const api = await client.connect() as any;
+
+            // 1. Find the secret ID
+            const secrets = await api.write('/ppp/secret/print', [`?name=${username}`]);
+            if (secrets.length > 0) {
+                // 2. Enable it
+                await api.write('/ppp/secret/set', [
+                    `=.id=${secrets[0]['.id'] || secrets[0].id}`,
+                    `=disabled=no`
+                ]);
+            }
+
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            client.close();
+            throw error;
+        }
+    }
+
+    /**
      * Suspend a user by changing their profile and kicking active session
      */
     async suspendUser(username: string, suspendedProfile: string = 'suspended') {
         console.log(`[MikroTik ${this.config.host}] Suspending user: ${username}`);
         const client = await this.getClient();
         try {
-            const api = await client.connect();
+            const api = await client.connect() as any;
 
-            // 1. Change secret profile
-            await api.write('/ppp/secret/set', [
-                `=numbers=${username}`,
-                `=profile=${suspendedProfile}`
-            ]);
+            // Find ID first for safety
+            const secrets = await api.write('/ppp/secret/print', [`?name=${username}`]);
+            if (secrets.length > 0) {
+                await api.write('/ppp/secret/set', [
+                    `=.id=${secrets[0]['.id'] || secrets[0].id}`,
+                    `=profile=${suspendedProfile}`
+                ]);
+            }
 
             // 2. Remove active session to force reconnect
             const active = await api.write('/ppp/active/print', [`?name=${username}`]);
             for (const sess of active) {
-                await api.write('/ppp/active/remove', [`=.id=${sess.id}`]);
+                await api.write('/ppp/active/remove', [`=.id=${sess['.id'] || sess.id}`]);
             }
 
             await client.close();
@@ -100,18 +163,20 @@ export class MikroTikService {
         console.log(`[MikroTik ${this.config.host}] Activating user: ${username} with profile: ${profile}`);
         const client = await this.getClient();
         try {
-            const api = await client.connect();
+            const api = await client.connect() as any;
 
-            // 1. Restore profile
-            await api.write('/ppp/secret/set', [
-                `=numbers=${username}`,
-                `=profile=${profile}`
-            ]);
+            const secrets = await api.write('/ppp/secret/print', [`?name=${username}`]);
+            if (secrets.length > 0) {
+                await api.write('/ppp/secret/set', [
+                    `=.id=${secrets[0]['.id'] || secrets[0].id}`,
+                    `=profile=${profile}`
+                ]);
+            }
 
             // 2. Remove active session to force reconnect
             const active = await api.write('/ppp/active/print', [`?name=${username}`]);
             for (const sess of active) {
-                await api.write('/ppp/active/remove', [`=.id=${sess.id}`]);
+                await api.write('/ppp/active/remove', [`=.id=${sess['.id'] || sess.id}`]);
             }
 
             await client.close();
@@ -128,7 +193,7 @@ export class MikroTikService {
     async getActiveConnections() {
         const client = await this.getClient();
         try {
-            const api = await client.connect();
+            const api = await client.connect() as any;
             const active = await api.write('/ppp/active/print');
             await client.close();
             return active;
@@ -144,7 +209,7 @@ export class MikroTikService {
     async getHealth() {
         const client = await this.getClient();
         try {
-            const api = await client.connect();
+            const api = await client.connect() as any;
 
             // Fetch resources (CPU, Memory, Uptime, Version)
             const resources = await api.write('/system/resource/print');

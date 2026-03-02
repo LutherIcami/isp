@@ -9,22 +9,28 @@ export async function GET() {
         // Proactively check health or get stats if needed
         // For now just return the list
         return NextResponse.json(res.rows);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const body: {
+            name: string;
+            ip_address: string;
+            username: string;
+            password?: string;
+            api_port?: string;
+        } = await request.json();
         const { name, ip_address, username, password, api_port } = body;
 
         // Verify connection before saving
         const mkService = new MikroTikService({
             host: ip_address,
             user: username,
-            pass: password,
-            port: parseInt(api_port) || 8728
+            pass: password || '',
+            port: parseInt(api_port || '8728') || 8728
         });
 
         const health = await mkService.getHealth();
@@ -38,11 +44,11 @@ export async function POST(request: Request) {
         const res = await pool.query(
             `INSERT INTO routers (name, ip_address, username, password, api_port, status) 
              VALUES ($1, $2, $3, $4, $5, 'online') RETURNING id, name, ip_address`,
-            [name, ip_address, username, password, parseInt(api_port) || 8728]
+            [name, ip_address, username, password, parseInt(api_port || '8728') || 8728]
         );
 
         return NextResponse.json(res.rows[0]);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

@@ -60,7 +60,7 @@ export async function GET() {
         cache.set('revenue_report_stats', stats, 300);
 
         return NextResponse.json(stats);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

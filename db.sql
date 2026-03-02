@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS admins (
 -- Insert default admin if not exists (Password: Admin@1234 - in real app, this should be hashed)
 INSERT INTO admins (username, password, full_name, role) 
 VALUES ('admin@airlink.com', 'Admin@1234', 'Super Admin', 'admin')
+ON CONFLICT (username) DO NOTHING;
 -- 8. Activity Logs Table
 CREATE TABLE IF NOT EXISTS activity_logs (
     id SERIAL PRIMARY KEY,
@@ -99,6 +100,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     status VARCHAR(20) DEFAULT 'success',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE activity_logs ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'success';
 
 -- Sample activity logs
 INSERT INTO activity_logs (event_type, description) VALUES 
@@ -110,5 +112,83 @@ INSERT INTO activity_logs (event_type, description) VALUES
 INSERT INTO plans (name, download_speed, upload_speed, price) VALUES 
 ('Home Basic', '5M', '2M', 1500),
 ('Home Plus', '10M', '5M', 2500),
-('Business Lite', '20M', '10M', 4500)
-ON CONFLICT DO NOTHING;
+('Business Lite', '20M', '10M', 4500);
+-- 9. Boost Logs Table
+CREATE TABLE IF NOT EXISTS boost_logs (
+    id SERIAL PRIMARY KEY,
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    original_plan_name VARCHAR(100),
+    boost_type VARCHAR(50), -- turbo, gaming, ultra
+    start_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) DEFAULT 'active'
+);
+
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS is_boosted BOOLEAN DEFAULT FALSE;
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS boost_expiration TIMESTAMP WITH TIME ZONE;
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS churn_score DECIMAL(5,2) DEFAULT 0;
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS risk_factors TEXT;
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS password VARCHAR(255);
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
+
+-- 10. Support Tickets Table
+CREATE TABLE IF NOT EXISTS tickets (
+    id SERIAL PRIMARY KEY,
+    subscriber_id INTEGER REFERENCES subscribers(id) ON DELETE CASCADE,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(50) DEFAULT 'technical', -- technical, billing, sales, other
+    priority VARCHAR(20) DEFAULT 'medium',   -- low, medium, high, critical
+    status VARCHAR(20) DEFAULT 'open',      -- open, in-progress, resolved, closed
+    assigned_admin_id INTEGER REFERENCES admins(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. Ticket Messages (Conversation Flow)
+CREATE TABLE IF NOT EXISTS ticket_messages (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER REFERENCES tickets(id) ON DELETE CASCADE,
+    sender_id INTEGER, -- Can be admin_id or subscriber_id (handled logically)
+    message TEXT NOT NULL,
+    is_admin_reply BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Firewall Rules Table
+CREATE TABLE IF NOT EXISTS firewall_rules (
+    id SERIAL PRIMARY KEY,
+    router_id INTEGER REFERENCES routers(id) ON DELETE CASCADE,
+    mikrotik_id VARCHAR(50), -- ID from MikroTik
+    chain VARCHAR(20) DEFAULT 'forward', -- input, forward, output
+    action VARCHAR(20) DEFAULT 'accept',  -- accept, drop, reject, passthrough
+    protocol VARCHAR(20),
+    src_address VARCHAR(45),
+    dst_address VARCHAR(45),
+    dst_port VARCHAR(10),
+    comment TEXT,
+    disabled BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 13. Communication Manifest (Broadcasts)
+CREATE TABLE IF NOT EXISTS broadcasts (
+    id SERIAL PRIMARY KEY,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(20) DEFAULT 'both', -- email, sms, both
+    category VARCHAR(50) DEFAULT 'general', -- maintenance, promotional, alert
+    sent_by INTEGER REFERENCES admins(id),
+    recipients_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. Broadcast Individual Logs
+CREATE TABLE IF NOT EXISTS broadcast_logs (
+    id SERIAL PRIMARY KEY,
+    broadcast_id INTEGER REFERENCES broadcasts(id) ON DELETE CASCADE,
+    subscriber_id INTEGER REFERENCES subscribers(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'sent', -- sent, failed
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

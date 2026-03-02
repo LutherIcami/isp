@@ -1,254 +1,248 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { StatCard } from '@/components/StatCard';
-import { Wifi, CreditCard, Activity, ArrowUpRight, Zap, Play, Loader2, AlertCircle } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
+import {
+    Wifi, CreditCard, LifeBuoy, Zap,
+    ArrowUpRight, ArrowDownRight, Clock,
+    CheckCircle2, AlertCircle, LogOut,
+    Maximize2, ShieldCheck, Gauge, Activity
+} from 'lucide-react';
+
+interface Profile {
+    id: number;
+    full_name: string;
+    email: string;
+    status: string;
+    mikrotik_username: string | null;
+    plan_name: string | null;
+    download_speed: string | null;
+    upload_speed: string | null;
+    next_billing_date: string | null;
+    router_name: string | null;
+}
+
+interface Invoice {
+    id: number;
+    amount: string;
+    status: string;
+    created_at: string;
+}
+
+interface Ticket {
+    id: number;
+    subject: string;
+    status: string;
+}
+
+interface PortalData {
+    profile: Profile;
+    invoices: Invoice[];
+    tickets: Ticket[];
+}
 
 export default function SubscriberDashboard() {
-    const { data: session } = useSession();
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<PortalData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [testRunning, setTestRunning] = useState(false);
-    const [currentSpeed, setCurrentSpeed] = useState<number>(0);
-    const [paymentLoading, setPaymentLoading] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch('/api/subscriber/portal-data');
-                if (!res.ok) throw new Error('Failed to fetch dashboard data');
-                const portalData = await res.json();
-                setData(portalData);
-
-                if (portalData.subscriber?.speed) {
-                    setCurrentSpeed(parseFloat(portalData.subscriber.speed.replace(/[^\d.]/g, '')) || 0);
-                }
-            } catch (err: any) {
-                setError(err.message);
+                const res = await fetch('/api/subscriber/portal');
+                const result = await res.json();
+                setData(result);
+            } catch (error) {
+                console.error(error);
             } finally {
                 setLoading(false);
             }
         };
-
-        if (session) {
-            fetchData();
-        }
-    }, [session]);
+        fetchData();
+    }, []);
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="animate-spin text-indigo-600" size={48} />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
-    if (error || !data) {
-        return (
-            <div className="p-8">
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 p-6 rounded-3xl flex items-center gap-4 text-red-600 dark:text-red-400">
-                    <AlertCircle size={24} />
-                    <div>
-                        <h3 className="font-bold">Error loading dashboard</h3>
-                        <p className="text-sm opacity-80">{error || 'No data available'}</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    const { subscriber, invoices } = data;
-
-    const runSpeedTest = () => {
-        setTestRunning(true);
-        let count = 0;
-        const targetSpeed = parseFloat(subscriber.speed.replace(/[^\d.]/g, '')) || 10;
-        const interval = setInterval(() => {
-            setCurrentSpeed(Math.random() * (targetSpeed * 1.2));
-            count++;
-            if (count > 20) {
-                clearInterval(interval);
-                setCurrentSpeed(targetSpeed - (Math.random() * 0.5));
-                setTestRunning(false);
-            }
-        }, 150);
-    };
-
-    const handlePayment = async () => {
-        if (!latestInvoice) return;
-        setPaymentLoading(true);
-        try {
-            const res = await fetch('/api/payments/mpesa/stk-push', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    amount: latestInvoice.amount,
-                    phone: subscriber.phone,
-                    invoiceId: latestInvoice.id
-                }),
-            });
-            const result = await res.json();
-            if (res.ok) {
-                alert('STK Push sent to your phone. Please enter your PIN.');
-            } else {
-                alert(result.error || 'Payment failed to initiate');
-            }
-        } catch (err) {
-            alert('Failed to connect to payment getaway');
-        } finally {
-            setPaymentLoading(false);
-        }
-    };
-
-    const latestInvoice = invoices[0];
-    const isOverdue = latestInvoice?.status === 'unpaid' && new Date(latestInvoice.due_date) < new Date();
+    const { profile, invoices, tickets } = data!;
 
     return (
-        <main className="p-8">
-            <header className="mb-8 flex flex-wrap justify-between items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-                        Welcome back, {subscriber.fullName.split(' ')[0]}!
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400">
-                        {subscriber.status === 'active'
-                            ? "Your connection is healthy and billing is up to date."
-                            : "Your subscription requires attention."}
-                    </p>
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 p-6 lg:p-12">
+            <header className="max-w-7xl mx-auto flex justify-between items-center mb-16 animate-reveal">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-2xl shadow-primary/20">
+                        <Wifi size={28} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-black tracking-tighter">AirLink Portal</h1>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Connected Identity</p>
+                    </div>
                 </div>
-                <div className={`flex ${subscriber.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'} px-4 py-2 rounded-2xl items-center gap-2 text-sm font-bold`}>
-                    <Zap size={16} fill="currentColor" />
-                    {subscriber.status.charAt(0).toUpperCase() + subscriber.status.slice(1)} Connection
+                <div className="flex items-center gap-6">
+                    <div className="text-right hidden md:block">
+                        <p className="font-black text-sm">{profile.full_name}</p>
+                        <p className="text-[10px] font-medium text-muted-foreground">{profile.mikrotik_username} • {profile.status}</p>
+                    </div>
+                    <button
+                        onClick={() => signOut({ callbackUrl: '/login' })}
+                        className="p-4 bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground rounded-2xl transition-all shadow-xl"
+                    >
+                        <LogOut size={20} />
+                    </button>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <StatCard
-                    title="Current Plan Speed"
-                    value={subscriber.speed ? `${subscriber.speed}` : 'N/A'}
-                    icon={<Zap size={24} />}
-                    trend={{ value: 100, isUp: true }}
-                    color="blue"
-                />
-                <StatCard
-                    title="Account Status"
-                    value={subscriber.status.toUpperCase()}
-                    icon={<Activity size={24} />}
-                    trend={{ value: 0, isUp: true }}
-                    color="purple"
-                />
-                <StatCard
-                    title="Next Billing"
-                    value={subscriber.nextBilling ? new Date(subscriber.nextBilling).toLocaleDateString() : 'N/A'}
-                    icon={<CreditCard size={24} />}
-                    trend={{ value: 0, isUp: false }}
-                    color="yellow"
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Network Status Card */}
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center">
-                    <div className="w-40 h-40 rounded-full border-8 border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center mb-6 relative">
-                        <span className={`text-4xl font-black transition-all ${testRunning ? 'scale-110 text-indigo-600 animate-pulse' : 'text-slate-900 dark:text-white'}`}>
-                            {currentSpeed.toFixed(1)}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mbps Download</span>
-                        <div className={`absolute top-0 right-0 p-2 rounded-full text-white transition-all ${testRunning ? 'bg-indigo-600 rotate-180 scale-125' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
-                            {testRunning ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} fill="currentColor" />}
+            <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Left Column: Plan & Usage */}
+                <div className="lg:col-span-2 space-y-10">
+                    <div className="glass-card relative group overflow-hidden p-10 rounded-[3rem] border border-border/50 shadow-2xl">
+                        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
+                            <Zap size={200} fill="currentColor" className="text-primary" />
                         </div>
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Network Status</h3>
-                    <p className="text-sm text-slate-500 mb-6 px-10">
-                        {subscriber.status === 'active'
-                            ? "You're getting optimal speeds from our local node."
-                            : "Please settle your pending balance to restore full speed."}
-                    </p>
-                    <button
-                        onClick={runSpeedTest}
-                        disabled={testRunning}
-                        className="px-6 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
-                    >
-                        {testRunning ? 'Testing...' : 'Run Speed Test'}
-                    </button>
-                </div>
 
-                {/* Billing Summary */}
-                <div className={`${isOverdue ? 'bg-red-600' : 'bg-slate-900'} text-white p-8 rounded-3xl shadow-xl shadow-slate-900/10 flex flex-col justify-between`}>
-                    <div>
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="p-3 bg-white/10 rounded-2xl">
-                                <CreditCard size={24} />
-                            </div>
-                            {latestInvoice && (
-                                <span className={`text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/5 uppercase tracking-tighter`}>
-                                    {latestInvoice.status === 'unpaid' ? `Due ${new Date(latestInvoice.due_date).toLocaleDateString()}` : 'Account Clear'}
+                        <div className="flex justify-between items-start mb-12">
+                            <div>
+                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${profile.status === 'active' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                    }`}>
+                                    Status: {profile.status}
                                 </span>
+                                <h2 className="text-5xl font-black tracking-tight mt-6 leading-none">{profile.plan_name} <br /> <span className="gradient-text italic">Premium Node</span></h2>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Cycle Validity</p>
+                                <p className="text-lg font-black">{profile.next_billing_date ? new Date(profile.next_billing_date).toLocaleDateString() : 'Manual Renewal'}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                            <div className="bg-muted/20 p-8 rounded-[2.5rem] border border-border/30 flex items-center gap-6">
+                                <div className="p-4 bg-primary/10 text-primary rounded-2xl"><ArrowDownRight size={24} /></div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Peak Downlink</p>
+                                    <p className="text-2xl font-black tracking-tighter">{profile.download_speed}bps</p>
+                                </div>
+                            </div>
+                            <div className="bg-muted/20 p-8 rounded-[2.5rem] border border-border/30 flex items-center gap-6">
+                                <div className="p-4 bg-muted/50 text-muted-foreground rounded-2xl"><ArrowUpRight size={24} /></div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Peak Uplink</p>
+                                    <p className="text-2xl font-black tracking-tighter">{profile.upload_speed}bps</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button className="flex-1 py-5 bg-primary text-primary-foreground font-black rounded-3xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-widest">
+                                Upgrade Plan
+                            </button>
+                            <button className="flex-1 py-5 bg-muted/50 text-foreground font-black rounded-3xl border border-border/50 hover:bg-muted transition-all text-sm uppercase tracking-widest">
+                                Network Stats
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        {/* Speed Test Simulation */}
+                        <div className="glass-card p-8 rounded-[3rem] border border-border/50 flex flex-col justify-between min-h-[300px]">
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="flex items-center gap-3">
+                                    <Gauge className="text-primary" size={20} />
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Neural Speed Audit</h3>
+                                </div>
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            </div>
+                            <div className="text-center py-6">
+                                <div className="text-6xl font-black italic tracking-tighter mb-2">94.8<span className="text-xl text-primary font-black ml-1">Mbps</span></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Current Velocity Index</p>
+                            </div>
+                            <button className="w-full py-3 bg-muted/50 hover:bg-muted text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-border/50 text-foreground">
+                                Recalibrate Connection
+                            </button>
+                        </div>
+
+                        {/* Recent Activity Mini-Feed */}
+                        <div className="glass-card p-8 rounded-[3rem] border border-border/50">
+                            <div className="flex items-center gap-3 mb-8">
+                                <Activity className="text-primary" size={20} />
+                                <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Node Activity</h3>
+                            </div>
+                            <div className="space-y-6">
+                                {tickets.length > 0 ? tickets.map((t, i) => (
+                                    <div key={i} className="flex gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground flex-shrink-0 text-xs font-bold border border-border/50">
+                                            TR
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-foreground line-clamp-1">{t.subject}</p>
+                                            <p className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground mt-1">{t.status}</p>
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <p className="text-center text-muted-foreground font-medium text-xs py-8 italic">Zero integrity faults detected.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Billing & Support */}
+                <div className="space-y-10">
+                    {/* Billing Terminal */}
+                    <div className="glass-card p-10 rounded-[3rem] border border-border/50">
+                        <div className="flex items-center gap-4 mb-10">
+                            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center"><CreditCard size={20} /></div>
+                            <h3 className="text-sm font-black tracking-tight uppercase text-foreground">Billing Manifest</h3>
+                        </div>
+
+                        <div className="space-y-6">
+                            {invoices.length > 0 ? invoices.map((inv, i) => (
+                                <div key={i} className="group cursor-pointer flex items-center justify-between p-4 bg-muted/20 hover:bg-muted/40 rounded-2xl border border-transparent hover:border-border/50 transition-all">
+                                    <div>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">{new Date(inv.created_at).toLocaleDateString()}</p>
+                                        <p className="text-sm font-black text-foreground">KES {inv.amount}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`text-[8px] font-black uppercase tracking-widest ${inv.status === 'paid' ? 'text-green-500' : 'text-amber-500'}`}>
+                                            {inv.status}
+                                        </span>
+                                        <ChevronRight size={14} className="text-muted-foreground group-hover:translate-x-1 transition-transform opacity-30" />
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="text-center py-10 opacity-30 text-foreground"><CreditCard size={40} className="mx-auto" /></div>
                             )}
                         </div>
-                        <h3 className="text-2xl font-bold mb-1">
-                            KES {latestInvoice?.status === 'unpaid' ? parseFloat(latestInvoice.amount).toLocaleString() : '0.00'}
-                        </h3>
-                        <p className="text-slate-400 text-sm font-medium">
-                            {latestInvoice?.status === 'unpaid' ? `Pending Invoice (#${latestInvoice.id})` : 'No pending payments'}
-                        </p>
-                    </div>
 
-                    <div className="mt-10">
-                        <button
-                            onClick={handlePayment}
-                            disabled={!latestInvoice || latestInvoice.status !== 'unpaid' || paymentLoading}
-                            className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {paymentLoading ? <Loader2 size={18} className="animate-spin" /> : (
-                                <>
-                                    Pay Now with M-Pesa
-                                    <ArrowUpRight size={18} />
-                                </>
-                            )}
+                        <button className="w-full mt-10 py-5 bg-primary text-primary-foreground font-black rounded-3xl shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all text-sm uppercase tracking-widest">
+                            Quick Reconcile (M-Pesa)
                         </button>
-                        <p className="text-[10px] text-slate-500 text-center mt-4">Safe & Encrypted 256-bit automated payment system.</p>
                     </div>
-                </div>
-            </div>
 
-            {/* Recent Invoices Table (Small) */}
-            {invoices.length > 0 && (
-                <div className="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                        <h3 className="font-bold text-slate-900 dark:text-white">Recent Invoices</h3>
-                        <button className="text-xs font-bold text-indigo-600">View All</button>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[10px] font-bold">
-                                    <th className="px-6 py-3">ID</th>
-                                    <th className="px-6 py-3">Period</th>
-                                    <th className="px-6 py-3">Amount</th>
-                                    <th className="px-6 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {invoices.map((inv: any) => (
-                                    <tr key={inv.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">#{inv.id}</td>
-                                        <td className="px-6 py-4 text-slate-500">{new Date(inv.billing_period_start).toLocaleDateString()}</td>
-                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">KES {parseFloat(inv.amount).toLocaleString()}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                {inv.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    {/* Support Node */}
+                    <div className="bg-primary/5 p-10 rounded-[3rem] border border-primary/10 relative overflow-hidden group">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-10 h-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg"><LifeBuoy size={20} /></div>
+                            <h3 className="text-sm font-black tracking-tight uppercase text-foreground">Technical Node</h3>
+                        </div>
+                        <p className="text-xs font-medium text-muted-foreground leading-relaxed mb-8">
+                            Experience a fault? Log a technical report directly to our edge response manifest.
+                        </p>
+                        <button className="w-full py-4 bg-primary/20 hover:bg-primary/30 text-primary font-black rounded-2xl transition-all text-[10px] uppercase tracking-[0.2em]">
+                            Open Response Ticket
+                        </button>
                     </div>
                 </div>
-            )}
-        </main>
+            </main>
+        </div>
     );
+}
+
+function ChevronRight({ size, className }: { size: number, className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6" /></svg>
+    )
 }

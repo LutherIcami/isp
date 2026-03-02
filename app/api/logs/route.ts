@@ -32,7 +32,7 @@ export async function GET(request: Request) {
                 totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit)
             }
         });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

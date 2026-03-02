@@ -4,9 +4,18 @@ import React, { useEffect, useState } from 'react';
 import { FileText, Download, Filter, Search, Loader2, AlertCircle } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
+interface Invoice {
+    id: number;
+    status: string;
+    amount: string;
+    billing_period_start: string;
+    billing_period_end: string;
+    due_date: string;
+}
+
 export default function SubscriberInvoices() {
     const { data: session } = useSession();
-    const [invoices, setInvoices] = useState<any[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -19,8 +28,8 @@ export default function SubscriberInvoices() {
                 if (!res.ok) throw new Error('Failed to fetch invoices');
                 const portalData = await res.json();
                 setInvoices(portalData.invoices);
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err) {
+                setError((err as Error).message);
             } finally {
                 setLoading(false);
             }

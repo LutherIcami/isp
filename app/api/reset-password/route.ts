@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+interface ResetPasswordBody {
+    token: string;
+    password: string;
+}
+
 export async function POST(req: Request) {
     try {
-        const { token, password } = await req.json();
+        const body: ResetPasswordBody = await req.json();
+        const { token, password } = body;
 
         if (!token || !password) {
             return NextResponse.json({ error: 'Token and password are required' }, { status: 400 });
@@ -31,7 +37,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ message: 'Password reset successfully' });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Reset password error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

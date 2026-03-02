@@ -44,8 +44,8 @@ export async function GET(
             activity: activityRes.rows,
             invoices: invoicesRes.rows
         });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
@@ -55,7 +55,12 @@ export async function PATCH(
 ) {
     try {
         const id = params.id;
-        const body = await request.json();
+        const body: {
+            status?: string;
+            plan_id?: number;
+            router_id?: number;
+            address?: string;
+        } = await request.json();
         const { status, plan_id, router_id, address } = body;
 
         // Fetch current state for MikroTik update
@@ -99,13 +104,9 @@ export async function PATCH(
             const routerService = await getRouterService(subscriber.router_id);
             if (routerService) {
                 if (status) {
-                    // Note: We might need to implement setUserEnabled in mikrotik.ts if it doesn't exist
-                    // For now, assuming upsertUser can handle status or we can add a toggle
                     if (status === 'suspended') {
-                        // Logic to disable user
                         await routerService.disableUser(subscriber.mikrotik_username);
                     } else if (status === 'active') {
-                        // Logic to enable user
                         await routerService.enableUser(subscriber.mikrotik_username);
                     }
                 }
@@ -121,7 +122,7 @@ export async function PATCH(
         }
 
         return NextResponse.json({ success: true, data: updateRes.rows[0] });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

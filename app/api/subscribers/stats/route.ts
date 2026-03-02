@@ -14,7 +14,7 @@ export async function GET() {
 
         const res = await pool.query(statsQuery);
         return NextResponse.json(res.rows[0]);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

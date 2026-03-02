@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { StatCard } from '@/components/StatCard';
+import { NetworkMap } from '@/components/NetworkMap';
 import {
     Users,
     Wifi,
@@ -12,7 +13,9 @@ import {
     Activity,
     Server,
     Clock,
-    CheckCircle2
+    CheckCircle2,
+    RefreshCw,
+    Database
 } from 'lucide-react';
 
 interface Stats {
@@ -44,7 +47,7 @@ export default function AdminDashboard() {
     const [routers, setRouters] = useState<Router[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true);
             const [statsRes, activityRes, routerRes] = await Promise.all([
@@ -67,23 +70,27 @@ export default function AdminDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchDashboardData();
-    }, []);
+    }, [fetchDashboardData]);
 
-    const runBilling = async () => {
+    const runBilling = useCallback(async () => {
         if (!confirm('Are you sure you want to trigger the billing cycle manually?')) return;
         try {
+            setLoading(true);
             const res = await fetch('/api/billing', { method: 'POST' });
             const result = await res.json();
             alert(`Billing Completed: Processed ${result.processed}, Suspended ${result.suspended}`);
             fetchDashboardData();
         } catch (error) {
+            console.error('Billing failed:', error);
             alert('Billing failed. Check logs.');
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [fetchDashboardData]);
 
     const formatTime = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -98,125 +105,100 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans">
+        <div className="min-h-screen bg-background flex font-sans selection:bg-primary/20">
             <Sidebar />
 
-            <main className="flex-1 ml-64 p-8">
-                <header className="mb-8 flex justify-between items-center">
+            <main className="flex-1 ml-64 p-10 space-y-10 animate-reveal">
+                <header className="flex justify-between items-center bg-card/30 backdrop-blur-md p-6 rounded-[2rem] border border-border/50">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
-                        <p className="text-slate-500 dark:text-slate-400">Welcome back! Here's what's happening today.</p>
+                        <h1 className="text-3xl font-black text-foreground tracking-tighter">
+                            Network <span className="gradient-text">Command</span>
+                        </h1>
+                        <p className="text-muted-foreground font-medium text-sm">System oversight for AirLink nodes.</p>
                     </div>
                     <div className="flex gap-4">
                         <button
                             onClick={fetchDashboardData}
-                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            className="bg-secondary text-secondary-foreground px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors flex items-center gap-2"
                         >
-                            Refresh Data
+                            <RefreshCw size={14} /> Sync Data
                         </button>
                         <button
                             onClick={runBilling}
-                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform"
+                            className="bg-primary text-primary-foreground px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 transition-all flex items-center gap-2"
                         >
-                            Run Billing Cycle
+                            <Database size={14} /> Run Billing Cycle
                         </button>
                     </div>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <StatCard
-                        title="Total Subscribers"
-                        value={loading ? '...' : stats?.totalSubscribers || 0}
+                        title="Subscribers"
+                        value={loading ? '---' : stats?.totalSubscribers || 0}
                         icon={<Users size={24} />}
-                        trend={{ value: 0, isUp: true }}
                         color="blue"
                     />
                     <StatCard
-                        title="Active Now"
-                        value={loading ? '...' : stats?.activeSubscribers || 0}
+                        title="Nodes Active"
+                        value={loading ? '---' : stats?.activeSubscribers || 0}
                         icon={<Activity size={24} />}
-                        trend={{ value: 0, isUp: true }}
                         color="green"
                     />
                     <StatCard
-                        title="Monthly Revenue"
-                        value={loading ? '...' : `KES ${(stats?.monthlyRevenue || 0).toLocaleString()}`}
+                        title="Revenue Cycle"
+                        value={loading ? '---' : `KES ${(stats?.monthlyRevenue || 0).toLocaleString()}`}
                         icon={<TrendingUp size={24} />}
-                        trend={{ value: 0, isUp: true }}
                         color="purple"
                     />
                     <StatCard
-                        title="Overdue Invoices"
-                        value={loading ? '...' : stats?.overdueCount || 0}
+                        title="Overdue Drafts"
+                        value={loading ? '---' : stats?.overdueCount || 0}
                         icon={<AlertCircle size={24} />}
-                        trend={{ value: 0, isUp: false }}
                         color="red"
                     />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Recent Activity Section */}
-                    <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-                        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <Activity className="text-indigo-600" size={20} />
-                            Recent System Activity
-                        </h2>
-                        <div className="space-y-4">
-                            {activities.length === 0 ? (
-                                <div className="text-center py-10 text-slate-400 text-sm">No recent activity logs found.</div>
-                            ) : activities.map((log) => (
-                                <div key={log.id} className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors cursor-default">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${log.event_type === 'billing' ? 'bg-purple-100 text-purple-600' :
-                                                log.event_type === 'payment' ? 'bg-green-100 text-green-600' :
-                                                    log.event_type === 'connection' ? 'bg-blue-100 text-blue-600' :
-                                                        'bg-slate-100 text-slate-600'
-                                            }`}>
-                                            {log.event_type === 'billing' ? <CreditCard size={18} /> :
-                                                log.event_type === 'payment' ? <CheckCircle2 size={18} /> :
-                                                    log.event_type === 'connection' ? <Wifi size={18} /> :
-                                                        <Server size={18} />}
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{log.description}</p>
-                                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">{log.event_type}</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">{formatTime(log.created_at)}</span>
-                                </div>
-                            ))}
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    <div className="lg:col-span-2">
+                        <NetworkMap routers={routers.map(r => ({
+                            id: r.id,
+                            name: r.name,
+                            status: r.status as 'online' | 'offline',
+                            load: Math.floor(Math.random() * 40) + 10, // Mock for visual
+                            latency: Math.floor(Math.random() * 5) + 1, // Mock for visual
+                            subscribers: stats?.totalSubscribers || 0 // Shared for now
+                        }))} />
                     </div>
 
-                    {/* Router Status Section */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-                        <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
-                            <Wifi className="text-indigo-600" size={20} />
-                            Network Health
-                        </h2>
-                        <div className="space-y-6">
-                            {routers.length === 0 ? (
-                                <div className="text-center py-6 text-slate-400 text-sm">No routers configured.</div>
-                            ) : routers.map((router) => (
-                                <div key={router.id} className="flex flex-col gap-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-semibold text-slate-900 dark:text-white">{router.name}</span>
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${router.status === 'online' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    {/* Recent Activity Section */}
+                    <div className="glass-card rounded-[2.5rem] overflow-hidden flex flex-col h-[500px]">
+                        <div className="p-8 border-b border-border/50 flex items-center gap-3 bg-muted/20">
+                            <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center"><Clock size={20} /></div>
+                            <h2 className="text-xl font-black tracking-tight">System Flux</h2>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                            {activities.length === 0 ? (
+                                <div className="text-center py-20 text-muted-foreground font-medium">No system events recorded.</div>
+                            ) : activities.map((log) => (
+                                <div key={log.id} className="flex items-center justify-between p-4 hover:bg-muted/30 rounded-2xl transition-all cursor-default group">
+                                    <div className="flex items-center gap-5">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all group-hover:scale-110 ${log.event_type === 'billing' ? 'bg-purple-500/10 border-purple-500/20 text-purple-500' :
+                                            log.event_type === 'payment' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
+                                                log.event_type === 'connection' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' :
+                                                    'bg-muted border-border text-muted-foreground'
                                             }`}>
-                                            {router.status}
-                                        </span>
+                                            {log.event_type === 'billing' ? <CreditCard size={20} /> :
+                                                log.event_type === 'payment' ? <CheckCircle2 size={20} /> :
+                                                    log.event_type === 'connection' ? <Wifi size={20} /> :
+                                                        <Server size={20} />}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-foreground group-hover:gradient-text transition-all text-sm">{log.description}</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-50">{log.event_type}</p>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-                                        <span className="font-mono">{router.ip_address}</span>
-                                        <span>Port: {router.api_port}</span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden mt-1">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-1000 ${router.status === 'online' ? 'bg-indigo-600' : 'bg-slate-300'
-                                                }`}
-                                            style={{ width: router.status === 'online' ? '100%' : '0%' }}
-                                        />
-                                    </div>
+                                    <span className="text-[10px] font-black text-muted-foreground opacity-40 uppercase tracking-widest">{formatTime(log.created_at)}</span>
                                 </div>
                             ))}
                         </div>

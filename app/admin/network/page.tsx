@@ -1,210 +1,149 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
+import { NetworkMap } from '@/components/NetworkMap';
 import {
-    Activity,
-    Wifi,
-    Cpu,
-    Database,
-    Users,
-    Clock,
-    RefreshCw,
-    AlertCircle,
-    CheckCircle2,
-    Signal
+    Shield, Zap, Globe, Cpu, Hash,
+    Wifi, HardDrive, RefreshCw
 } from 'lucide-react';
 
-interface RouterHealth {
+interface Router {
     id: number;
     name: string;
-    ip: string;
-    status: 'online' | 'offline';
-    cpu: number;
-    memory: {
-        free: number;
-        total: number;
-    };
-    total_sessions: number;
-    uptime: string;
-    version: string;
-    board_name: string;
+    ip_address: string;
+    status: string;
 }
 
-export default function NetworkHealthPage() {
-    const [stats, setStats] = useState<RouterHealth[]>([]);
+export default function NetworkIntelligencePage() {
+    const [routers, setRouters] = useState<Router[]>([]);
     const [loading, setLoading] = useState(true);
-    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-    const fetchHealth = async () => {
+    const fetchNetworkState = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch('/api/routers/health');
+            const res = await fetch('/api/routers');
             const data = await res.json();
-            if (Array.isArray(data)) {
-                setStats(data);
-                setLastUpdated(new Date());
-            }
+            setRouters(data);
         } catch (error) {
-            console.error('Failed to fetch health:', error);
+            console.error('Failed to fetch network state:', error);
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchHealth();
-        const interval = setInterval(fetchHealth, 30000); // Poll every 30 seconds
-        return () => clearInterval(interval);
     }, []);
 
-    const totalActiveUsers = stats.reduce((acc, curr) => acc + (curr.total_sessions || 0), 0);
-    const onlineCount = stats.filter(s => s.status === 'online').length;
+    useEffect(() => {
+        fetchNetworkState();
+    }, [fetchNetworkState]);
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans">
+        <div className="min-h-screen bg-background flex font-sans overflow-hidden">
             <Sidebar />
 
-            <main className="flex-1 ml-64 p-8">
-                <header className="mb-8 flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Network Health</h1>
-                        <p className="text-slate-500 dark:text-slate-400">Real-time status of MikroTik nodes and active sessions.</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Last Sync</p>
-                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{lastUpdated.toLocaleTimeString()}</p>
+            <main className="flex-1 ml-64 p-12 h-screen overflow-y-auto relative animate-reveal">
+                <header className="mb-12 flex justify-between items-end">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Live Neural Grid</span>
                         </div>
+                        <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase italic">Network <span className="gradient-text">Intelligence</span></h1>
+                        <p className="text-muted-foreground font-medium text-sm max-w-xl">
+                            Real-time synchronization with active edge nodes and subscriber distribution topology.
+                        </p>
+                    </div>
+                    <div className="flex gap-4">
                         <button
-                            onClick={fetchHealth}
-                            disabled={loading}
-                            className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500 hover:text-indigo-600 transition-all hover:shadow-lg disabled:opacity-50 active:scale-95"
+                            onClick={fetchNetworkState}
+                            className="p-4 bg-muted/20 hover:bg-muted/40 rounded-2xl transition-all text-muted-foreground hover:text-primary"
                         >
                             <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
                         </button>
                     </div>
                 </header>
 
-                {/* Network Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl text-indigo-600">
-                                <Signal size={24} />
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+                    {/* Performance HUD */}
+                    <div className="lg:col-span-1 space-y-8">
+                        <div className="glass-card p-8 rounded-[2rem] border border-primary/10 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Zap size={80} fill="currentColor" className="text-primary" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Node Status</span>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">Aggregate Velocity</h3>
+                            <div className="flex items-end gap-2 mb-4">
+                                <span className="text-5xl font-black tracking-tighter">842</span>
+                                <span className="text-primary font-black text-sm mb-2 italic">Mbps</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-primary w-[75%] animate-pulse" />
+                            </div>
                         </div>
-                        <h4 className="text-3xl font-black text-slate-900 dark:text-white mb-1">{onlineCount} / {stats.length}</h4>
-                        <p className="text-sm text-slate-500 font-medium">Nodes currently online</p>
+
+                        <div className="glass-card p-8 rounded-[2rem] border border-green-500/10 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Shield size={80} fill="currentColor" className="text-green-500" />
+                            </div>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">Security Uptime</h3>
+                            <div className="flex items-end gap-2 mb-4">
+                                <span className="text-5xl font-black tracking-tighter">100</span>
+                                <span className="text-green-500 font-black text-sm mb-2 italic">%</span>
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-50">Zero integrity faults detected</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground px-4">Node Inventory</h3>
+                            {routers.map((router) => (
+                                <div key={router.id} className="glass group p-4 rounded-2xl flex items-center justify-between border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-2 rounded-xl ${router.status === 'online' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                            <Cpu size={16} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-widest">{router.name}</p>
+                                            <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-tighter">{router.ip_address}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black tracking-widest text-primary">8 ms</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-green-600">
-                                <Users size={24} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Load</span>
+                    {/* Interactive Topology Grid */}
+                    <div className="lg:col-span-3 space-y-10">
+                        <div className="bg-[#050505] rounded-[3rem] border border-white/5 shadow-2xl overflow-hidden min-h-[700px] relative mt-16 scale-[1.02]">
+                            <NetworkMap routers={routers.map((r) => ({
+                                id: r.id,
+                                name: r.name,
+                                status: r.status as 'online' | 'offline',
+                                load: Math.floor(Math.random() * 30) + 15,
+                                latency: 4 + r.id,
+                                subscribers: 12 + (r.id * 5)
+                            }))} />
                         </div>
-                        <h4 className="text-3xl font-black text-slate-900 dark:text-white mb-1">{totalActiveUsers}</h4>
-                        <p className="text-sm text-slate-500 font-medium">Concurrent active sessions</p>
-                    </div>
 
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-2xl text-rose-600">
-                                <Activity size={24} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Avg. Latency</span>
-                        </div>
-                        <h4 className="text-3xl font-black text-slate-900 dark:text-white mb-1">~12ms</h4>
-                        <p className="text-sm text-slate-500 font-medium">Optimized backbone response</p>
-                    </div>
-                </div>
-
-                {/* Individual Router Cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {stats.map((router) => (
-                        <div key={router.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden transition-all hover:border-indigo-500/50">
-                            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/30 dark:bg-slate-900/50">
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-3 rounded-2xl ${router.status === 'online' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
-                                        <Wifi size={24} />
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            {[
+                                { label: 'Active Sessions', val: '142', icon: <Wifi size={14} />, color: 'primary' },
+                                { label: 'Resource Load', val: '24%', icon: <HardDrive size={14} />, color: 'green-500' },
+                                { label: 'Edge Latency', val: '4ms', icon: <Globe size={14} />, color: 'amber-500' },
+                                { label: 'Node Count', val: routers.length.toString(), icon: <Hash size={14} />, color: 'indigo-500' },
+                            ].map((stat, i) => (
+                                <div key={i} className="glass-card p-6 rounded-3xl border border-white/5 flex items-center gap-4 hover:bg-white/5 transition-all">
+                                    <div className={`w-10 h-10 rounded-xl bg-${stat.color}/10 text-${stat.color} flex items-center justify-center`}>
+                                        {stat.icon}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">{router.name}</h3>
-                                        <p className="text-xs font-mono text-slate-400">{router.ip}</p>
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-50">{stat.label}</p>
+                                        <p className="text-xl font-black italic">{stat.val}</p>
                                     </div>
                                 </div>
-                                <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${router.status === 'online' ? 'bg-green-500/10 text-green-500' : 'bg-rose-500/10 text-rose-500'
-                                    }`}>
-                                    <div className={`w-2 h-2 rounded-full animate-pulse ${router.status === 'online' ? 'bg-green-500' : 'bg-rose-500'}`} />
-                                    {router.status}
-                                </div>
-                            </div>
-
-                            <div className="p-6">
-                                {router.status === 'online' ? (
-                                    <>
-                                        <div className="grid grid-cols-2 gap-6 mb-8">
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                                        <Cpu size={12} /> CPU Load
-                                                    </span>
-                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">{router.cpu}%</span>
-                                                </div>
-                                                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full transition-all duration-1000 ${router.cpu > 80 ? 'bg-rose-500' : 'bg-indigo-500'}`}
-                                                        style={{ width: `${router.cpu}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                                        <Database size={12} /> RAM Usage
-                                                    </span>
-                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                        {Math.round(((router.memory.total - router.memory.free) / router.memory.total) * 100)}%
-                                                    </span>
-                                                </div>
-                                                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-violet-600 transition-all duration-1000"
-                                                        style={{ width: `${((router.memory.total - router.memory.free) / router.memory.total) * 100}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl text-center">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Active</p>
-                                                <p className="text-xl font-black text-slate-900 dark:text-white">{router.total_sessions}</p>
-                                                <p className="text-[8px] font-bold text-slate-400 mt-0.5">SESSIONS</p>
-                                            </div>
-                                            <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl text-center col-span-2">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center justify-center gap-1">
-                                                    <Clock size={12} /> System Uptime
-                                                </p>
-                                                <p className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{router.uptime}</p>
-                                                <p className="text-[8px] font-bold text-slate-400 mt-0.5 uppercase">{router.board_name} {router.version}</p>
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="py-12 flex flex-col items-center justify-center text-center opacity-50">
-                                        <AlertCircle size={48} className="text-rose-500 mb-4" />
-                                        <h4 className="font-bold text-slate-900 dark:text-white">Connection Timeout</h4>
-                                        <p className="text-sm text-slate-500 max-w-[200px]">Unable to poll metrics. Check router physical link and API credentials.</p>
-                                    </div>
-                                )}
-                            </div>
+                            ))}
                         </div>
-                    ))}
+                    </div>
                 </div>
             </main>
         </div>

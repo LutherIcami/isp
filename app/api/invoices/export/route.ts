@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         const res = await pool.query(query, [ids]);
 
         return NextResponse.json(res.rows);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

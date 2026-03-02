@@ -10,7 +10,7 @@ type CacheEntry<T> = {
 
 class SimpleCache {
     private static instance: SimpleCache;
-    private store: Map<string, CacheEntry<any>> = new Map();
+    private store: Map<string, CacheEntry<unknown>> = new Map();
 
     private constructor() { }
 
@@ -27,7 +27,7 @@ class SimpleCache {
      * @param data Data to store
      * @param ttl Time to live in seconds
      */
-    set(key: string, data: any, ttl: number = 30) {
+    set<T>(key: string, data: T, ttl: number = 30) {
         this.store.set(key, {
             data,
             expiry: Date.now() + (ttl * 1000)

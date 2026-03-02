@@ -16,8 +16,8 @@ export async function GET(request: Request) {
         const actualSortField = validFields.includes(sortField) ? sortField : 'created_at';
         const actualSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-        let whereClauses = [];
-        let params: any[] = [];
+        const whereClauses: string[] = [];
+        const params: (string | number)[] = [];
 
         if (subscriberId) {
             params.push(subscriberId);
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
                 totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit)
             }
         });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

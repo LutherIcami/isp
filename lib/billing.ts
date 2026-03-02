@@ -1,15 +1,33 @@
 import pool from './db';
 
+interface BillingSubscriber {
+    id: number;
+    full_name: string;
+    next_billing_date: string | null;
+    billing_cycle: 'monthly' | 'weekly' | 'daily';
+    price: string | number;
+    plan_name: string;
+    router_id: number | null;
+    mikrotik_username: string | null;
+}
+
+interface OverdueSubscriber {
+    subscriber_id: number;
+    full_name: string;
+    amount: string | number;
+}
+
 export async function runBillingCycle() {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
         const today = new Date().toISOString().split('T')[0];
+        const logEntries: string[] = [];
 
         // 1. Get subscribers due for billing
         const res = await client.query(
-            `SELECT s.*, p.price, p.billing_cycle 
+            `SELECT s.*, p.price, p.billing_cycle, p.name as plan_name
        FROM subscribers s 
        JOIN plans p ON s.plan_id = p.id 
        WHERE s.status IN ('active', 'suspended') 
@@ -17,15 +35,9 @@ export async function runBillingCycle() {
             [today]
         );
 
-        const subscribers = res.rows;
-        console.log(`Found ${subscribers.length} subscribers due for billing.`);
+        const subscribers: BillingSubscriber[] = res.rows;
 
         for (const sub of subscribers) {
-            // Create Invoice
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 7); // 7 days grace period
-            const dueDateStr = dueDate.toISOString().split('T')[0];
-
             const periodStart = sub.next_billing_date || today;
             const periodEnd = new Date(periodStart);
             if (sub.billing_cycle === 'monthly') {
@@ -36,6 +48,21 @@ export async function runBillingCycle() {
                 periodEnd.setDate(periodEnd.getDate() + 1);
             }
             const periodEndStr = periodEnd.toISOString().split('T')[0];
+
+            // Check if invoice for this period already exists (Idempotency)
+            const duplicateCheck = await client.query(
+                'SELECT id FROM invoices WHERE subscriber_id = $1 AND billing_period_start = $2',
+                [sub.id, periodStart]
+            );
+
+            if (duplicateCheck.rows.length > 0) {
+                logEntries.push(`Skipped ${sub.full_name}: Invoice already exists for ${periodStart}`);
+                continue;
+            }
+
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 7);
+            const dueDateStr = dueDate.toISOString().split('T')[0];
 
             // Insert Invoice
             await client.query(
@@ -50,39 +77,42 @@ export async function runBillingCycle() {
                 [periodStart, periodEndStr, sub.id]
             );
 
-            // Log activity
+            // Detailed Activity Log
             await client.query(
-                `INSERT INTO activity_logs (subscriber_id, action, details) VALUES ($1, $2, $3)`,
-                [sub.id, 'Invoice Generated', `Generated invoice of KES ${sub.price} for period starting ${periodStart}`]
+                `INSERT INTO activity_logs (subscriber_id, action, details, status) VALUES ($1, $2, $3, $4)`,
+                [sub.id, 'Invoicing', `Renewal automated: ${sub.plan_name} for period ${periodStart} to ${periodEndStr}. Amount: KES ${sub.price}`, 'success']
             );
 
-            console.log(`Generated invoice for ${sub.full_name} (ID: ${sub.id})`);
+            logEntries.push(`Invoiced ${sub.full_name}: KES ${sub.price} for ${periodStart} node cycle.`);
         }
 
-        // 2. Check for overdue invoices and suspend users
+        // 2. Overdue Logic
         const overdueRes = await client.query(
-            `SELECT DISTINCT i.subscriber_id, s.full_name 
+            `SELECT DISTINCT i.subscriber_id, s.full_name, i.amount 
        FROM invoices i 
        JOIN subscribers s ON i.subscriber_id = s.id
        WHERE i.status = 'unpaid' AND i.due_date < $1 AND s.status = 'active'`,
             [today]
         );
 
-        const overdueSubscribers = overdueRes.rows;
+        const overdueSubscribers: OverdueSubscriber[] = overdueRes.rows;
         for (const sub of overdueSubscribers) {
-            // 1. Update Database Status
             await client.query(
                 `UPDATE subscribers SET status = 'suspended' WHERE id = $1`,
                 [sub.subscriber_id]
             );
 
-            // Log suspension activity
             await client.query(
-                `INSERT INTO activity_logs (subscriber_id, action, details) VALUES ($1, $2, $3)`,
-                [sub.subscriber_id, 'Subscriber Suspended', `Suspended due to overdue payment for ${sub.full_name}`]
+                `UPDATE invoices SET status = 'overdue' WHERE subscriber_id = $1 AND status = 'unpaid'`,
+                [sub.subscriber_id]
             );
 
-            // 2. Call MikroTik API to Suspend (Outside main transaction to handle failures gracefully)
+            await client.query(
+                `INSERT INTO activity_logs (subscriber_id, action, details, status) VALUES ($1, $2, $3, $4)`,
+                [sub.subscriber_id, 'Suspension', `Account restricted: Non-payment of KES ${sub.amount}. Grace period of 7 days exceeded.`, 'error']
+            );
+
+            // MikroTik Sync
             try {
                 const subDetailRes = await client.query('SELECT router_id, mikrotik_username FROM subscribers WHERE id = $1', [sub.subscriber_id]);
                 if (subDetailRes.rows.length > 0 && subDetailRes.rows[0].router_id) {
@@ -94,18 +124,19 @@ export async function runBillingCycle() {
                     }
                 }
             } catch (mikrotikError) {
-                console.error(`Failed to suspend user ${sub.full_name} on MikroTik:`, mikrotikError);
-                // We still committed the DB status change, but MikroTik might still allow traffic if this failed.
+                console.error(`MikroTik Sync Fail: ${sub.full_name}`, mikrotikError);
             }
-
-            console.log(`Suspended subscriber: ${sub.full_name} due to overdue invoice.`);
         }
 
         await client.query('COMMIT');
-        return { success: true, processed: subscribers.length, suspended: overdueSubscribers.length };
+        return {
+            success: true,
+            processed: logEntries.length,
+            suspended: overdueSubscribers.length,
+            logs: logEntries
+        };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Billing Cycle Error:', error);
         throw error;
     } finally {
         client.release();

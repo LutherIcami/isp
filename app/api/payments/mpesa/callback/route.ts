@@ -1,19 +1,49 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+interface MpesaCallbackItem {
+    Name: string;
+    Value?: string | number;
+}
+
+interface MpesaCallbackBody {
+    Body: {
+        stkCallback: {
+            ResultCode: number;
+            ResultDesc: string;
+            CheckoutRequestID: string;
+            CallbackMetadata?: {
+                Item: MpesaCallbackItem[];
+            };
+        };
+    };
+}
+
+interface SubscriberUpdateRow {
+    id: number;
+    mikrotik_username: string | null;
+    router_id: number | null;
+    plan_id: number;
+}
+
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const body: MpesaCallbackBody = await request.json();
         console.log('M-Pesa Callback Received:', JSON.stringify(body));
 
         const result = body.Body.stkCallback;
 
-        if (result.ResultCode === 0) {
+        if (result.ResultCode === 0 && result.CallbackMetadata) {
             // Payment Successful
             const metadata = result.CallbackMetadata.Item;
-            const amount = metadata.find((i: any) => i.Name === 'Amount').Value;
-            const mpesaReceipt = metadata.find((i: any) => i.Name === 'MpesaReceiptNumber').Value;
-            const phoneNumber = metadata.find((i: any) => i.Name === 'PhoneNumber').Value;
+            const amount = metadata.find(i => i.Name === 'Amount')?.Value;
+            const mpesaReceipt = metadata.find(i => i.Name === 'MpesaReceiptNumber')?.Value;
+            const phoneNumber = metadata.find(i => i.Name === 'PhoneNumber')?.Value;
+
+            if (!amount || !mpesaReceipt || !phoneNumber) {
+                console.warn('Incomplete M-Pesa metadata received');
+                return NextResponse.json({ ResultCode: 1, ResultDesc: "Incomplete Metadata" });
+            }
 
             // The AccountReference or CheckoutRequestID usually helps link to the invoice
             const checkoutID = result.CheckoutRequestID;
@@ -40,7 +70,7 @@ export async function POST(request: Request) {
             );
 
             // 2. Reactivate Subscriber if suspended
-            const subRes = await pool.query(
+            const subRes = await pool.query<SubscriberUpdateRow>(
                 `UPDATE subscribers SET status = 'active' 
          WHERE status = 'suspended' AND phone LIKE $1 
          RETURNING id, mikrotik_username, router_id, plan_id`,
@@ -66,7 +96,7 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
-    } catch (error: any) {
+    } catch (error) {
         console.error('M-Pesa Callback Error:', error);
         return NextResponse.json({ ResultCode: 1, ResultDesc: "Internal Error" });
     }

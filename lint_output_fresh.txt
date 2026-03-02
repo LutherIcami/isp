@@ -1,0 +1,298 @@
+
+> wifi@0.1.0 lint
+> eslint
+
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\broadcast\page.tsx
+  6:18  warning  'Mail' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\firewall\page.tsx
+   78:8   warning  React Hook useEffect has a missing dependency: 'fetchRules'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  116:18  warning  'error' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\invoices\page.tsx
+    6:25  warning  'Filter' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+    8:23  warning  'Zap' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+    8:28  warning  'Flame' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   68:18  warning  'error' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   96:8   warning  React Hook useEffect has a missing dependency: 'fetchInvoices'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  128:18  warning  'error' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+  149:18  warning  'error' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\logs\page.tsx
+  72:8  warning  React Hook useEffect has a missing dependency: 'fetchLogs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\network\page.tsx
+    7:5   warning  'Activity' is defined but never used        @typescript-eslint/no-unused-vars
+    8:33  warning  'Maximize2' is defined but never used       @typescript-eslint/no-unused-vars
+   14:12  warning  'pulse' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   92:51  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  114:66  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  117:53  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\payments\page.tsx
+  6:46  warning  'ArrowUpRight' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\reports\page.tsx
+   6:5   warning  'BarChart3' is defined but never used           @typescript-eslint/no-unused-vars
+   6:16  warning  'TrendingUp' is defined but never used          @typescript-eslint/no-unused-vars
+   6:28  warning  'DollarSign' is defined but never used          @typescript-eslint/no-unused-vars
+   7:19  warning  'ArrowDownRight' is defined but never used      @typescript-eslint/no-unused-vars
+   7:35  warning  'PieChart' is defined but never used            @typescript-eslint/no-unused-vars
+   8:5   warning  'Calendar' is defined but never used            @typescript-eslint/no-unused-vars
+   8:36  warning  'ChevronRight' is defined but never used        @typescript-eslint/no-unused-vars
+   9:18  warning  'Shield' is defined but never used              @typescript-eslint/no-unused-vars
+  42:11  warning  'maxGrowth' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\routers\page.tsx
+  6:10  warning  'Wifi' is defined but never used       @typescript-eslint/no-unused-vars
+  6:30  warning  'HardDrive' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\subscribers\page.tsx
+   7:5   warning  'Users' is defined but never used                @typescript-eslint/no-unused-vars
+  36:12  warning  'pagination' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\admin\support\page.tsx
+    6:23  warning  'Filter' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+    6:31  warning  'MessageSquare' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+    7:5   warning  'AlertTriangle' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+    7:34  warning  'MoreVertical' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+    8:34  warning  'ShieldAlert' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   47:8   warning  React Hook useEffect has a missing dependency: 'fetchTickets'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  212:38  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  232:8   warning  React Hook useEffect has a missing dependency: 'fetchDetail'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
+  246:18  warning  'error' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+  289:35  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\admin\billing\stats\route.ts
+  27:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\admin\reports\route.ts
+  65:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\admin\routers\[id]\firewall\route.ts
+  3:8  warning  'pool' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\admin\tickets\[id]\route.ts
+   38:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\admin\tickets\route.ts
+  35:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\auth\[...nextauth]\route.ts
+  72:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  79:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\billing\route.ts
+  14:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\forgot-password\route.ts
+  38:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\invoices\bulk\route.ts
+  43:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\invoices\export\route.ts
+  32:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\invoices\route.ts
+  63:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\logs\route.ts
+  35:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\notifications\reminders\route.ts
+  40:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\payments\mpesa\callback\route.ts
+  14:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\payments\mpesa\stk-push\route.ts
+   8:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\payments\route.ts
+  13:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  63:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\plans\route.ts
+   8:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\register\route.ts
+  39:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\reports\revenue\route.ts
+  63:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\reset-password\route.ts
+  34:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\routers\health\route.ts
+  41:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\stats\route.ts
+  37:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscriber\boost\route.ts
+   9:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscriber\change-password\route.ts
+  7:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscriber\diagnostics\route.ts
+    8:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   26:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscriber\portal-data\route.ts
+  6:27  warning  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  8:64  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscriber\portal\route.ts
+   8:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscriber\update-profile\route.ts
+  8:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscribers\[id]\route.ts
+   47:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscribers\route.ts
+   21:13  error  'whereConditions' is never reassigned. Use 'const' instead  prefer-const
+   22:13  error  'params' is never reassigned. Use 'const' instead           prefer-const
+   22:21  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+   62:21  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  101:21  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\subscribers\stats\route.ts
+  17:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\api\webhooks\mpesa\route.ts
+   28:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   29:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   30:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:99  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\forgot-password\page.tsx
+   5:64  warning  'ShieldCheck' is defined but never used  @typescript-eslint/no-unused-vars
+  31:18  warning  'err' is defined but never used          @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\login\page.tsx
+   7:28  warning  'ShieldCheck' is defined but never used   @typescript-eslint/no-unused-vars
+  31:55  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:18  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\register\page.tsx
+  51:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\reset-password\page.tsx
+   3:27  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+  61:18  warning  'err' is defined but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\subscriber-portal\dashboard\page.tsx
+   7:35  warning  'Clock' is defined but never used         @typescript-eslint/no-unused-vars
+   8:5   warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+   8:19  warning  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+   9:5   warning  'Maximize2' is defined but never used     @typescript-eslint/no-unused-vars
+   9:16  warning  'ShieldCheck' is defined but never used   @typescript-eslint/no-unused-vars
+  13:14  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  14:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:14  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\subscriber-portal\invoices\page.tsx
+   4:10  warning  'FileText' is defined but never used        @typescript-eslint/no-unused-vars
+   4:30  warning  'Filter' is defined but never used          @typescript-eslint/no-unused-vars
+   4:55  warning  'AlertCircle' is defined but never used     @typescript-eslint/no-unused-vars
+   9:46  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  11:12  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  22:27  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\subscriber-portal\layout.tsx
+  8:5  warning  'CreditCard' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\subscriber-portal\settings\page.tsx
+    5:10  warning  'Settings' is defined but never used  @typescript-eslint/no-unused-vars
+   74:18  warning  'err' is defined but never used       @typescript-eslint/no-unused-vars
+  100:18  warning  'err' is defined but never used       @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\app\subscriber-portal\usage\page.tsx
+  4:26  warning  'Zap' is defined but never used               @typescript-eslint/no-unused-vars
+  8:19  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\apply-auth-updates.js
+  1:20  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\apply-schema.js
+  1:20  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\components\AddRouterModal.tsx
+  55:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\components\AddSubscriberModal.tsx
+  26:12  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  97:18  warning  'err' is defined but never used               @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\components\LogPaymentModal.tsx
+   26:12  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  119:18  warning  'err' is defined but never used               @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\components\NetworkMap.tsx
+  4:34  warning  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  4:47  warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\components\Sidebar.tsx
+  12:5  warning  'Settings' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\create-db.js
+  1:20  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\lib\billing.ts
+  109:22  warning  'mikrotikError' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\lib\cache.ts
+  13:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\lib\mikrotik.ts
+   35:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   74:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  166:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  196:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  264:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  314:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\seed-plans.js
+  1:20  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\test-db.js
+  1:18  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\LutherIcami\OneDrive - sbsl.co.ke\Desktop\wifi\update-schema.js
+  1:20  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+Γ£û 160 problems (91 errors, 69 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

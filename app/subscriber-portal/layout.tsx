@@ -26,7 +26,7 @@ export default function SubscriberLayout({
     children: React.ReactNode;
 }) {
     const handleSignOut = () => {
-        signOut({ callbackUrl: '/login' });
+        signOut({ callbackUrl: typeof window !== 'undefined' ? `${window.location.origin}/login` : '/login' });
     };
 
     return (

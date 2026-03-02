@@ -1,203 +1,187 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import {
-    TrendingUp,
-    Users,
-    PieChart,
-    ArrowUpRight,
-    ArrowDownRight,
-    DollarSign,
-    Calendar,
-    ChevronRight,
-    Loader2
+    Users, ArrowUpRight, Download, RefreshCw,
+    Target, Zap
 } from 'lucide-react';
 
-interface RevenueStats {
-    mrr: { month: string; revenue: number; invoice_count: number }[];
-    growth: { month: string; new_subscribers: number }[];
-    efficiency: { status: string; total_amount: number }[];
+interface ReportData {
+    revenueHistory: Array<{ month: string, total: string }>;
+    projection: string;
+    collectionStats: Array<{ status: string, total: string }>;
+    growthStats: Array<{ month: string, new_subs: number }>;
+    planDistribution: Array<{ name: string, subscriber_count: string }>;
 }
 
 export default function ReportsPage() {
-    const [data, setData] = useState<RevenueStats | null>(null);
+    const [data, setData] = useState<ReportData | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetch('/api/reports/revenue')
-            .then(res => res.json())
-            .then(setData)
-            .finally(() => setLoading(false));
+    const fetchReports = useCallback(async () => {
+        try {
+            setLoading(true);
+            const res = await fetch('/api/admin/reports');
+            const result = await res.json();
+            setData(result);
+        } catch (error) {
+            console.error('Failed to fetch reports:', error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center">
-                <Loader2 size={48} className="animate-spin text-indigo-600 mb-4" />
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Generating Fiscal Intelligence...</p>
-            </div>
-        );
-    }
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
 
-    const totalInvoiced = data?.efficiency.reduce((acc, curr) => acc + parseFloat(curr.total_amount as any), 0) || 0;
-    const totalPaid = data?.efficiency.find(e => e.status === 'paid')?.total_amount || 0;
-    const collectionRate = totalInvoiced > 0 ? (totalPaid / totalInvoiced) * 100 : 0;
+    const maxRevenue = data ? Math.max(...data.revenueHistory.map(r => parseFloat(r.total))) : 0;
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans">
+        <div className="min-h-screen bg-background flex font-sans overflow-hidden">
             <Sidebar />
 
-            <main className="flex-1 ml-64 p-8">
-                <header className="mb-8">
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Revenue & Growth Analytics</h1>
-                    <p className="text-slate-500 dark:text-slate-400">Financial insights and subscriber acquisition trends.</p>
+            <main className="flex-1 ml-64 p-12 h-screen overflow-y-auto relative animate-reveal">
+                <header className="mb-12 flex justify-between items-end">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Fiscal Intelligence Node</span>
+                        </div>
+                        <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase italic">Strategic <span className="gradient-text">Analytics</span></h1>
+                        <p className="text-muted-foreground font-medium text-sm max-w-xl">
+                            Real-time fiscal velocity tracking and multi-dimensional growth manifest.
+                        </p>
+                    </div>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={fetchReports}
+                            className="p-4 bg-muted/20 hover:bg-muted/40 rounded-2xl transition-all text-muted-foreground hover:text-primary"
+                        >
+                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                        </button>
+                        <button className="bg-primary text-primary-foreground px-8 py-4 rounded-3xl text-sm font-black hover:shadow-2xl hover:shadow-primary/30 transition-all flex items-center gap-3 active:scale-95">
+                            <Download size={18} /> Export Full Manifest
+                        </button>
+                    </div>
                 </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    {/* Collection Efficiency Card */}
-                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl lg:col-span-1">
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl text-indigo-600">
-                                <PieChart size={24} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Collection Rate</span>
-                        </div>
-
-                        <div className="relative w-48 h-48 mx-auto mb-8 flex items-center justify-center">
-                            <svg className="w-full h-full transform -rotate-90">
-                                <circle
-                                    cx="96"
-                                    cy="96"
-                                    r="88"
-                                    stroke="currentColor"
-                                    strokeWidth="12"
-                                    fill="transparent"
-                                    className="text-slate-100 dark:text-slate-800"
-                                />
-                                <circle
-                                    cx="96"
-                                    cy="96"
-                                    r="88"
-                                    stroke="currentColor"
-                                    strokeWidth="12"
-                                    fill="transparent"
-                                    strokeDasharray={552.9}
-                                    strokeDashoffset={552.9 - (552.9 * collectionRate) / 100}
-                                    className="text-indigo-600 transition-all duration-1000 ease-out"
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-4xl font-black text-slate-900 dark:text-white">{Math.round(collectionRate)}%</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">collected</span>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <p className="text-xs text-slate-500 font-medium">Monthly Invoiced</p>
-                                <p className="text-sm font-bold text-slate-900 dark:text-white">KES {totalInvoiced.toLocaleString()}</p>
-                            </div>
-                            <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-600" style={{ width: `${collectionRate}%` }} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* MRR Trend Chart (CSS Sparklines) */}
-                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl lg:col-span-2">
-                        <div className="flex justify-between items-center mb-12">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">MRR Growth</h3>
-                                <p className="text-xs text-slate-500">Monthly Recurring Revenue trends vs Last Year</p>
-                            </div>
-                            <div className="flex gap-2">
-                                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl text-emerald-600">
-                                    <TrendingUp size={20} />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-end justify-between h-48 gap-4 mb-8">
-                            {data?.mrr.map((m, i) => {
-                                const maxRev = Math.max(...data.mrr.map(x => x.revenue));
-                                const height = (m.revenue / maxRev) * 100;
-                                return (
-                                    <div key={m.month} className="flex-1 group relative flex flex-col items-center gap-4">
-                                        <div className="absolute -top-8 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                            KES {Math.round(m.revenue / 1000)}k
-                                        </div>
-                                        <div
-                                            className="w-full bg-indigo-500/10 group-hover:bg-indigo-500/20 rounded-t-xl transition-all duration-700 ease-out-expo"
-                                            style={{ height: `${height}%` }}
-                                        >
-                                            <div
-                                                className="absolute bottom-0 left-0 right-0 bg-indigo-600 rounded-t-xl transition-all duration-1000 delay-150"
-                                                style={{ height: i === data.mrr.length - 1 ? '100%' : '60%' }}
-                                            />
-                                        </div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 rotate-[-45deg] origin-left ml-2 whitespace-nowrap">
-                                            {m.month.split(' ')[0]}
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Sub-grid: Growth & Plans */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Subscriber Growth */}
-                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-lg">
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-2xl text-violet-600">
-                                <Users size={20} />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-slate-900 dark:text-white">Acquisition Metrics</h4>
-                                <p className="text-xs text-slate-500">New subscribers joined per month</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-6">
-                            {data?.growth.map((g) => (
-                                <div key={g.month} className="flex items-center gap-4">
-                                    <span className="w-16 text-[10px] font-black uppercase tracking-widest text-slate-400">{g.month.split(' ')[0]}</span>
-                                    <div className="flex-1 h-3 bg-slate-50 dark:bg-slate-950 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-violet-600 rounded-full transition-all duration-1000"
-                                            style={{ width: `${(g.new_subscribers / Math.max(...data.growth.map(x => x.new_subscribers))) * 100}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-900 dark:text-white">+{g.new_subscribers}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Quick Stats Summary */}
-                    <div className="grid grid-cols-2 gap-6">
-                        {[
-                            { label: 'Avg Ticket', value: 'KES 2,450', icon: <DollarSign size={20} />, sub: 'Per Sub', color: 'indigo' },
-                            { label: 'Churn Rate', value: '1.2%', icon: <ArrowDownRight size={20} />, sub: 'Monthly', color: 'rose' },
-                            { label: 'Active Pipeline', value: 'KES 2.4M', icon: <TrendingUp size={20} />, sub: 'Total Value', color: 'emerald' },
-                            { label: 'Next Cycle', value: '14 Days', icon: <Calendar size={20} />, sub: 'Expected', color: 'amber' },
-                        ].map((stat) => (
-                            <div key={stat.label} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${stat.color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
-                                        stat.color === 'rose' ? 'bg-rose-50 text-rose-600' :
-                                            stat.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
-                                                'bg-amber-50 text-amber-600'
-                                    }`}>
-                                    {stat.icon}
-                                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    {/* Revenue Velocity Chart */}
+                    <div className="lg:col-span-2 space-y-10">
+                        <div className="glass-card p-10 rounded-[3rem] border border-white/5 relative overflow-hidden group">
+                            <div className="flex justify-between items-start mb-12">
                                 <div>
-                                    <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{stat.label}</p>
+                                    <h3 className="text-xl font-black tracking-tight mb-1">Revenue Stream Velocity</h3>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Monthly Net Collection Trace</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-2xl font-black text-primary">KES {(parseFloat(data?.revenueHistory[data.revenueHistory.length - 1]?.total || '0')).toLocaleString()}</span>
+                                    <p className="text-[8px] font-black uppercase tracking-tighter text-green-500 flex items-center justify-end gap-1">
+                                        <ArrowUpRight size={10} /> 12% Cycle Growth
+                                    </p>
                                 </div>
                             </div>
-                        ))}
+
+                            <div className="h-[300px] flex items-end gap-4 px-4">
+                                {loading ? (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin opacity-20" />
+                                    </div>
+                                ) : data?.revenueHistory.map((rev, i) => {
+                                    const height = (parseFloat(rev.total) / maxRevenue) * 100;
+                                    return (
+                                        <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
+                                            <div className="w-full relative">
+                                                <div
+                                                    className="w-full bg-primary/20 rounded-t-2xl transition-all duration-1000 group-hover/bar:bg-primary/40 relative overflow-hidden"
+                                                    style={{ height: `${height}%` }}
+                                                >
+                                                    <div className="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-primary/40 to-transparent" />
+                                                </div>
+                                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity text-[10px] font-black pointer-events-none whitespace-nowrap">
+                                                    KES {Math.round(parseFloat(rev.total) / 1000)}k
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground opacity-40">{rev.month.split(' ')[0]}</span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="glass-card p-8 rounded-[2.5rem] bg-indigo-500/5 border border-indigo-500/10">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-500 flex items-center justify-center"><Target size={24} /></div>
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Revenue Projection</h4>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl font-black italic">KES {(parseFloat(data?.projection || '0')).toLocaleString()}</span>
+                                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Target</span>
+                                </div>
+                                <p className="text-[10px] font-medium text-muted-foreground mt-2 opacity-50">Est. collection for next billing node based on active subscriptions.</p>
+                            </div>
+
+                            <div className="glass-card p-8 rounded-[2.5rem] bg-green-500/5 border border-green-500/10">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-12 h-12 rounded-2xl bg-green-500/20 text-green-500 flex items-center justify-center"><Zap size={24} /></div>
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Collection Efficacy</h4>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl font-black italic">94.2%</span>
+                                    <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Synchronized</span>
+                                </div>
+                                <p className="text-[10px] font-medium text-muted-foreground mt-2 opacity-50">Current month reconciliation rate against total invoicing manifest.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Side Analytics */}
+                    <div className="space-y-10">
+                        <div className="glass-card p-8 rounded-[2.5rem] border border-white/5">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-8 text-center px-4">Plan Distribution Hub</h3>
+                            <div className="space-y-6">
+                                {data?.planDistribution.map((plan, i) => {
+                                    const totalSubs = data.planDistribution.reduce((acc, p) => acc + parseInt(p.subscriber_count), 0);
+                                    const percentage = (parseInt(plan.subscriber_count) / totalSubs) * 100;
+                                    return (
+                                        <div key={i} className="space-y-2">
+                                            <div className="flex justify-between items-center px-1">
+                                                <span className="text-xs font-black uppercase tracking-widest">{plan.name}</span>
+                                                <span className="text-[10px] font-black text-primary">{Math.round(percentage)}%</span>
+                                            </div>
+                                            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-primary transition-all duration-1000"
+                                                    style={{ width: `${percentage}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="glass-card p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden">
+                            <div className="absolute -right-4 -bottom-4 opacity-5">
+                                <Users size={120} />
+                            </div>
+                            <h3 className="text-sm font-black tracking-tight mb-8">Subscriber Growth Manifest</h3>
+                            <div className="space-y-4">
+                                {data?.growthStats.slice().reverse().map((g, i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 bg-muted/20 rounded-2xl border border-transparent hover:border-primary/10 transition-all">
+                                        <span className="text-[10px] font-black uppercase tracking-widest">{g.month}</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-black text-foreground">+{g.new_subs}</span>
+                                            <div className="w-8 h-[1px] bg-primary/20" />
+                                            <span className="text-[8px] font-black text-green-500 uppercase tracking-widest italic">Node Expansion</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

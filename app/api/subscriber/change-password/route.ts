@@ -2,14 +2,22 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next";
 
+interface SessionUser {
+    user: {
+        email: string;
+        role: string;
+    };
+}
+
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession() as any;
+        const session = await getServerSession() as SessionUser | null;
         if (!session || session.user.role !== 'subscriber') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { current, new: newPassword } = await req.json();
+        const body: { current: string; new: string } = await req.json();
+        const { current, new: newPassword } = body;
         const email = session.user.email;
 
         // 1. Verify current password

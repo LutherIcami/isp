@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+interface BulkInvoiceAction {
+    invoiceIds: number[];
+    action: 'mark_as_paid';
+}
+
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const body: BulkInvoiceAction = await request.json();
         const { invoiceIds, action } = body;
 
         if (!Array.isArray(invoiceIds) || invoiceIds.length === 0) {
@@ -21,8 +26,7 @@ export async function POST(request: Request) {
                     [invoiceIds]
                 );
 
-                // Log activity for each invoice (optional, but good for audit)
-                // For performance in bulk, maybe just one log or a few
+                // Log activity
                 await client.query(
                     `INSERT INTO activity_logs (action, details) 
                      VALUES ($1, $2)`,
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

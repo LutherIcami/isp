@@ -5,15 +5,14 @@ export async function GET() {
     try {
         const res = await pool.query('SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 20');
         return NextResponse.json(res.rows);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const { event_type, description, status } = body;
+        const { event_type, description, status }: { event_type: string; description: string; status?: string } = await request.json();
 
         const res = await pool.query(
             'INSERT INTO activity_logs (event_type, description, status) VALUES ($1, $2, $3) RETURNING *',
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
         );
 
         return NextResponse.json(res.rows[0]);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

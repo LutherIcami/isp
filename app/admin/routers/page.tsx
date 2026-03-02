@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { AddRouterModal } from '@/components/AddRouterModal';
-import { Wifi, Plus, Server, HardDrive, Cpu, Activity, MoreVertical, Edit2, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Server, Cpu, Activity, MoreVertical, Edit2, Loader2, RefreshCw } from 'lucide-react';
 
 interface Router {
     id: number;
@@ -19,7 +19,7 @@ export default function RoutersPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const fetchRouters = async () => {
+    const fetchRouters = useCallback(async () => {
         try {
             setLoading(true);
             const res = await fetch('/api/routers');
@@ -35,103 +35,109 @@ export default function RoutersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchRouters();
-    }, []);
+    }, [fetchRouters]);
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans">
+        <div className="min-h-screen bg-background flex font-sans overflow-hidden">
             <Sidebar />
 
-            <main className="flex-1 ml-64 p-8">
-                <header className="mb-8 flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Network Infrastructure</h1>
-                        <p className="text-slate-500 dark:text-slate-400">Monitor and configure your MikroTik routers and wireless nodes.</p>
+            <main className="flex-1 ml-64 p-10 h-screen overflow-y-auto relative animate-reveal">
+                <header className="mb-10 flex justify-between items-end">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Core Infrastructure</span>
+                        </div>
+                        <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase italic">Network <span className="gradient-text">Nodes</span></h1>
+                        <p className="text-muted-foreground font-medium text-sm">
+                            Monitor and configure your MikroTik edge routers and wireless links.
+                        </p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-4">
                         <button
                             onClick={fetchRouters}
-                            className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-indigo-600 transition-colors"
+                            className="p-4 bg-muted/20 hover:bg-muted border border-border/50 rounded-2xl text-muted-foreground hover:text-primary transition-colors"
                         >
                             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                         </button>
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 active:scale-95"
+                            className="bg-primary text-primary-foreground px-8 py-4 rounded-3xl text-sm font-black hover:shadow-2xl hover:shadow-primary/30 transition-all flex items-center gap-3 active:scale-95"
                         >
-                            <Plus size={18} />
-                            Connect New Router
+                            <Plus size={20} />
+                            Provision Node
                         </button>
                     </div>
                 </header>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-                        <Loader2 className="animate-spin mb-4" size={32} />
-                        <p>Scanning network nodes...</p>
+                    <div className="flex flex-col items-center justify-center h-64 text-muted-foreground/50">
+                        <Loader2 className="animate-spin mb-4 text-primary" size={32} />
+                        <p className="font-black uppercase tracking-widest text-xs">Scanning network nodes...</p>
                     </div>
                 ) : routers.length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center">
-                        <Server size={48} className="mx-auto text-slate-200 mb-4" />
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Routers Connected</h3>
-                        <p className="text-slate-500 mb-6">You haven't added any MikroTik routers to the system yet.</p>
+                    <div className="glass-card border border-border/50 rounded-[3rem] p-16 text-center shadow-sm">
+                        <Server size={48} className="mx-auto text-muted-foreground/30 mb-6" />
+                        <h3 className="text-2xl font-black tracking-tight text-foreground mb-2">No active nodes detected</h3>
+                        <p className="text-muted-foreground text-sm font-medium mb-8">Establish a connection to your first MikroTik edge router.</p>
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700"
+                            className="bg-primary text-primary-foreground px-8 py-4 rounded-3xl text-sm font-black hover:shadow-2xl transition-all inline-flex items-center gap-2 uppercase tracking-widest shadow-primary/20"
                         >
-                            Add Your First Router
+                            <Plus size={18} /> Add Edge Node
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
                         {routers.map((router) => (
-                            <div key={router.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all group">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className={`p-4 rounded-2xl ${router.status === 'online' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
+                            <div key={router.id} className="glass-card border border-border/50 rounded-[2.5rem] p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div className={`p-4 rounded-2xl ${router.status === 'online' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                                         <Server size={28} />
                                     </div>
-                                    <div className="flex gap-1">
-                                        <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-                                            <Edit2 size={16} className="text-slate-400" />
+                                    <div className="flex gap-2">
+                                        <button className="p-3 hover:bg-muted rounded-xl transition-colors">
+                                            <Edit2 size={16} className="text-muted-foreground" />
                                         </button>
-                                        <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-                                            <MoreVertical size={16} className="text-slate-400" />
+                                        <button className="p-3 hover:bg-muted rounded-xl transition-colors">
+                                            <MoreVertical size={16} className="text-muted-foreground" />
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-indigo-600 transition-colors">{router.name}</h3>
-                                    <p className="text-sm font-mono text-slate-500">{router.ip_address}</p>
+                                <div className="mb-8">
+                                    <h3 className="text-2xl font-black text-foreground mb-1 group-hover:gradient-text transition-all tracking-tight uppercase">{router.name}</h3>
+                                    <p className="text-xs font-mono font-bold text-muted-foreground tracking-widest">{router.ip_address}</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 mb-6">
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                            <Cpu size={10} /> API PORT
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <div className="p-4 bg-muted/20 rounded-[1.5rem] border border-border/30">
+                                        <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                            <Cpu size={12} /> API PORT
                                         </p>
-                                        <p className="font-bold text-slate-900 dark:text-white">{router.api_port}</p>
+                                        <p className="font-black text-foreground text-lg">{router.api_port}</p>
                                     </div>
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                            <Activity size={10} /> HEALTH
+                                    <div className="p-4 bg-muted/20 rounded-[1.5rem] border border-border/30">
+                                        <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                            <Activity size={12} /> HEALTH
                                         </p>
-                                        <p className="font-bold text-slate-900 dark:text-white capitalize">{router.status}</p>
+                                        <p className="font-black text-foreground text-lg capitalize">{router.status}</p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center justify-between pt-6 border-t border-border/10">
                                     <div className="flex items-center gap-2">
-                                        <div className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] font-bold text-slate-500 uppercase">
-                                            Node ID: {router.id}
+                                        <div className="px-4 py-1.5 bg-muted/40 rounded-full text-[10px] font-black text-muted-foreground uppercase tracking-widest border border-border/50">
+                                            Node Manifest: #{router.id}
                                         </div>
                                     </div>
-                                    <div className={`flex items-center gap-1.5 text-xs font-bold ${router.status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
+                                    <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${router.status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
                                         <Activity size={14} className={router.status === 'online' ? 'animate-pulse' : ''} />
-                                        {router.status.toUpperCase()}
+                                        {router.status}
                                     </div>
                                 </div>
                             </div>

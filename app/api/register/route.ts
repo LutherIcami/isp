@@ -2,9 +2,17 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { sendWelcomeEmail } from '@/lib/mail';
 
+interface RegisterBody {
+    fullName: string;
+    email: string;
+    phone: string;
+    password: string;
+}
+
 export async function POST(req: Request) {
     try {
-        const { fullName, email, phone, password } = await req.json();
+        const body: RegisterBody = await req.json();
+        const { fullName, email, phone, password } = body;
 
         // 1. Basic validation
         if (!fullName || !email || !phone || !password) {
@@ -36,7 +44,7 @@ export async function POST(req: Request) {
             userId: result.rows[0].id
         }, { status: 201 });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Registration error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

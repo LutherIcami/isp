@@ -8,32 +8,39 @@ interface StatCardProps {
         value: number;
         isUp: boolean;
     };
-    color?: string;
+    color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple';
 }
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, color = 'blue' }) => {
-    const colorMap: Record<string, string> = {
-        blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-        green: 'bg-green-500/10 text-green-600 dark:text-green-400',
-        red: 'bg-red-500/10 text-red-600 dark:text-red-400',
-        yellow: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
-        purple: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+    const colorVariants = {
+        blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+        green: 'bg-green-500/10 text-green-500 border-green-500/20',
+        red: 'bg-red-500/10 text-red-500 border-red-500/20',
+        yellow: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+        purple: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 transition-all hover:shadow-lg hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-xl ${colorMap[color]}`}>
+        <div className="glass-card group p-6 hover:-translate-y-1.5 transition-all duration-500 cursor-default overflow-hidden relative">
+            <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 rounded-full transition-all group-hover:scale-150 ${color === 'blue' ? 'bg-blue-500' : color === 'green' ? 'bg-green-500' : color === 'purple' ? 'bg-purple-500' : color === 'red' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+
+            <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className={`p-3.5 rounded-2xl border ${colorVariants[color]} group-hover:scale-110 transition-transform duration-500`}>
                     {icon}
                 </div>
                 {trend && (
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${trend.isUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <div className={`flex items-center gap-1 font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-widest ${trend.isUp ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                         {trend.isUp ? '↑' : '↓'} {trend.value}%
-                    </span>
+                    </div>
                 )}
             </div>
-            <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{title}</h3>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
+
+            <div className="relative z-10">
+                <h3 className="text-muted-foreground text-xs font-black uppercase tracking-[0.2em] mb-1 opacity-70 group-hover:opacity-100 transition-opacity">{title}</h3>
+                <p className="text-3xl font-black text-foreground tracking-tighter animate-reveal group-hover:gradient-text">
+                    {value}
+                </p>
+            </div>
         </div>
     );
 };

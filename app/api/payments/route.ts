@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { NotificationService } from '@/lib/notifications';
 
 export async function GET() {
     try {
@@ -10,17 +11,23 @@ export async function GET() {
             ORDER BY p.payment_date DESC
         `);
         return NextResponse.json(res.rows);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
-import { NotificationService } from '@/lib/notifications';
+interface PaymentCreateBody {
+    subscriber_id: number;
+    invoice_id?: number;
+    amount: number | string;
+    payment_method: string;
+    transaction_id: string;
+}
 
 export async function POST(request: Request) {
     const client = await pool.connect();
     try {
-        const body = await request.json();
+        const body: PaymentCreateBody = await request.json();
         const { subscriber_id, invoice_id, amount, payment_method, transaction_id } = body;
 
         await client.query('BEGIN');
@@ -54,15 +61,15 @@ export async function POST(request: Request) {
             NotificationService.sendPaymentReceipt(
                 subscriber.phone,
                 subscriber.full_name,
-                parseFloat(amount),
+                parseFloat(amount.toString()),
                 transaction_id
-            ).catch(err => console.error('Notification failed:', err));
+            ).catch((err: Error) => console.error('Notification failed:', err.message));
         }
 
         return NextResponse.json(res.rows[0]);
-    } catch (error: any) {
+    } catch (error) {
         if (client) await client.query('ROLLBACK');
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     } finally {
         client.release();
     }

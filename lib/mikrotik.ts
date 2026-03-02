@@ -197,7 +197,7 @@ export class MikroTikService {
             const active = await api.write('/ppp/active/print');
             await client.close();
             return active;
-        } catch (error) {
+        } catch {
             client.close();
             return [];
         }
@@ -233,18 +233,126 @@ export class MikroTikService {
                 version: res.version,
                 board_name: res['board-name']
             };
-        } catch (error) {
+        } catch {
             client.close();
             return { status: 'offline', cpu: 0, memory: { free: 0, total: 0 }, total_sessions: 0 };
+        }
+    }
+
+    /**
+     * Get active session for a specific subscriber
+     */
+    async getSubscriberSession(username: string) {
+        const client = await this.getClient();
+        try {
+            const api = await client.connect() as any;
+            const active = await api.write('/ppp/active/print', [`?name=${username}`]);
+            await client.close();
+            return active.length > 0 ? active[0] : null;
+        } catch {
+            client.close();
+            return null;
+        }
+    }
+
+    /**
+     * Get firewall filter rules
+     */
+    async getFirewallRules() {
+        const client = await this.getClient();
+        try {
+            const api = await client.connect() as any;
+            const rules = await api.write('/ip/firewall/filter/print');
+            await client.close();
+            return rules;
+        } catch {
+            client.close();
+            return [];
+        }
+    }
+
+    /**
+     * Add a firewall filter rule
+     */
+    async addFirewallRule(params: {
+        chain?: string,
+        action?: string,
+        protocol?: string,
+        'src-address'?: string,
+        'dst-address'?: string,
+        'dst-port'?: string,
+        comment?: string
+    }) {
+        const client = await this.getClient();
+        try {
+            const api = await client.connect() as any;
+            const cmd = ['/ip/firewall/filter/add'];
+
+            if (params.chain) cmd.push(`=chain=${params.chain}`);
+            if (params.action) cmd.push(`=action=${params.action}`);
+            if (params.protocol) cmd.push(`=protocol=${params.protocol}`);
+            if (params['src-address']) cmd.push(`=src-address=${params['src-address']}`);
+            if (params['dst-address']) cmd.push(`=dst-address=${params['dst-address']}`);
+            if (params['dst-port']) cmd.push(`=dst-port=${params['dst-port']}`);
+            if (params.comment) cmd.push(`=comment=${params.comment}`);
+
+            await api.write(cmd);
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            client.close();
+            throw error;
+        }
+    }
+
+    /**
+     * Toggle (Enable/Disable) a firewall rule
+     */
+    async toggleFirewallRule(mikrotikId: string, disabled: boolean) {
+        const client = await this.getClient();
+        try {
+            const api = await client.connect() as any;
+            await api.write('/ip/firewall/filter/set', [
+                `=.id=${mikrotikId}`,
+                `=disabled=${disabled ? 'yes' : 'no'}`
+            ]);
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            client.close();
+            throw error;
+        }
+    }
+
+    /**
+     * Remove a firewall rule
+     */
+    async removeFirewallRule(mikrotikId: string) {
+        const client = await this.getClient();
+        try {
+            const api = await client.connect() as any;
+            await api.write('/ip/firewall/filter/remove', [`=.id=${mikrotikId}`]);
+            await client.close();
+            return { success: true };
+        } catch (error) {
+            client.close();
+            throw error;
         }
     }
 }
 
 import pool from './db';
 
+interface RouterRow {
+    ip_address: string;
+    username: string;
+    password?: string | null;
+    api_port?: number | null;
+}
+
 export async function getRouterService(routerId: number): Promise<MikroTikService | null> {
-    const res = await pool.query(
-        'SELECT * FROM routers WHERE id = $1',
+    const res = await pool.query<RouterRow>(
+        'SELECT ip_address, username, password, api_port FROM routers WHERE id = $1',
         [routerId]
     );
 
@@ -254,7 +362,7 @@ export async function getRouterService(routerId: number): Promise<MikroTikServic
     return new MikroTikService({
         host: router.ip_address,
         user: router.username,
-        pass: router.password,
-        port: router.api_port
+        pass: router.password || '',
+        port: router.api_port || 8728
     });
 }

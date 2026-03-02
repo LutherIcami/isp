@@ -19,7 +19,7 @@ export async function GET(request: Request) {
         const actualSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
         let whereConditions = [];
-        let params: any[] = [];
+        let params: (string | number)[] = [];
 
         if (search) {
             whereConditions.push(`(s.full_name ILIKE $${params.length + 1} OR s.phone ILIKE $${params.length + 1} OR s.email ILIKE $${params.length + 1})`);
@@ -59,14 +59,24 @@ export async function GET(request: Request) {
                 totalPages: Math.ceil(parseInt(countRes.rows[0].count) / limit)
             }
         });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
+}
+
+interface SubscriberCreateBody {
+    full_name: string;
+    phone: string;
+    email: string;
+    plan_id: number;
+    router_id?: number | null;
+    mikrotik_username?: string;
+    mikrotik_password?: string;
 }
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const body: SubscriberCreateBody = await request.json();
         const { full_name, phone, email, plan_id, router_id, mikrotik_username, mikrotik_password } = body;
 
         // 1. Save to Database
@@ -86,7 +96,12 @@ export async function POST(request: Request) {
                 if (planRes.rows.length > 0) {
                     const plan = planRes.rows[0];
                     const profileName = `${plan.download_speed}/${plan.upload_speed}`;
-                    await routerService.upsertUser(mikrotik_username, mikrotik_password, profileName, full_name);
+                    await routerService.upsertUser(
+                        mikrotik_username || '',
+                        mikrotik_password || '',
+                        profileName,
+                        full_name
+                    );
                 }
             }
         }
@@ -98,7 +113,7 @@ export async function POST(request: Request) {
         );
 
         return NextResponse.json({ success: true, id: newId });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

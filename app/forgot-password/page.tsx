@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
                 <div className="w-full max-w-md">
                     <div className="text-center lg:text-left mb-10">
                         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Forgot Password?</h1>
-                        <p className="text-slate-500 dark:text-slate-400">Enter your email and we'll send you a recovery link.</p>
+                        <p className="text-slate-500 dark:text-slate-400">Enter your email and we&apos;ll send you a recovery link.</p>
                     </div>
 
                     {error && (
@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
                             </div>
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Check your email</h2>
                             <p className="text-slate-500 dark:text-slate-400 mb-8">
-                                We've sent a password reset link to <span className="font-bold text-slate-900 dark:text-white">{email}</span>.
+                                We&apos;ve sent a password reset link to <span className="font-bold text-slate-900 dark:text-white">{email}</span>.
                             </p>
                             <Link
                                 href="/login"

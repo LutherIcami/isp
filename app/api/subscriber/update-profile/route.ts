@@ -3,14 +3,22 @@ import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+interface SessionUser {
+    user: {
+        email: string;
+        role: string;
+    };
+}
+
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions) as any;
+        const session = await getServerSession(authOptions) as SessionUser | null;
         if (!session || session.user.role !== 'subscriber') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { fullName, phone } = await req.json();
+        const body: { fullName: string; phone: string } = await req.json();
+        const { fullName, phone } = body;
         const email = session.user.email;
 
         if (!fullName || !phone) {

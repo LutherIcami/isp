@@ -3,14 +3,28 @@ import { MpesaService } from '@/lib/mpesa';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+interface SessionUser {
+    user: {
+        email: string;
+        role: string;
+    };
+}
+
+interface StkPushBody {
+    amount: number;
+    phone: string;
+    invoiceId: number;
+}
+
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions) as any;
+        const session = await getServerSession(authOptions) as SessionUser | null;
         if (!session || session.user.role !== 'subscriber') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { amount, phone, invoiceId } = await req.json();
+        const body: StkPushBody = await req.json();
+        const { amount, phone, invoiceId } = body;
 
         if (!amount || !phone || !invoiceId) {
             return NextResponse.json({ error: 'Missing payment details' }, { status: 400 });
@@ -37,7 +51,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: result.errorMessage || 'Failed to initiate M-Pesa push' }, { status: 500 });
         }
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Payment initiation error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

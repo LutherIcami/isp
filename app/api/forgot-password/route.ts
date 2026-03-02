@@ -5,7 +5,8 @@ import { sendPasswordResetEmail } from '@/lib/mail';
 
 export async function POST(req: Request) {
     try {
-        const { email } = await req.json();
+        const body: { email: string } = await req.json();
+        const { email } = body;
 
         if (!email) {
             return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ message: 'If an account exists, a reset link has been sent.' });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Forgot password error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

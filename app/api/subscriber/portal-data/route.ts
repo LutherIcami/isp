@@ -3,9 +3,16 @@ import pool from '@/lib/db';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function GET(req: Request) {
+interface SessionUser {
+    user: {
+        email: string;
+        role: string;
+    };
+}
+
+export async function GET() {
     try {
-        const session = await getServerSession(authOptions) as any;
+        const session = await getServerSession(authOptions) as SessionUser | null;
 
         if (!session || session.user.role !== 'subscriber') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -50,12 +57,14 @@ export async function GET(req: Request) {
                 speed: subscriber.download_speed || '0',
                 price: subscriber.plan_price || 0,
                 nextBilling: subscriber.next_billing_date,
+                is_boosted: subscriber.is_boosted,
+                boost_expiration: subscriber.boost_expiration,
             },
             invoices: invRes.rows
         });
 
     } catch (error) {
         console.error('Portal data error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
